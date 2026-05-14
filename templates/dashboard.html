@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}FleetFlow | Panel{% endblock %}
+{% block page_heading %}Panel analitico{% endblock %}
+{% block page_subheading %}KPIs ejecutivos, ritmo contractual y senales operativas en un espacio fintech de alto nivel.{% endblock %}
+
+{% block content %}
+<section class="row g-4 mb-4">
+  {% for card in kpi_cards %}
+    <div class="col-sm-6 col-xxl-3">
+      <div class="glass-card kpi-card h-100">
+        <span class="eyebrow">{{ card.label }}</span>
+        <div class="d-flex justify-content-between align-items-end mt-3">
+          <h3 class="mb-0">{{ card.value }}</h3>
+          <span class="trend-chip">{{ card.trend }}</span>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</section>
+
+<section class="row g-4">
+  <div class="col-xxl-8">
+    <div class="glass-card p-4 chart-panel">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <span class="eyebrow">FLUJO DE INGRESOS</span>
+          <h5 class="mb-0 mt-2">Rendimiento mensual de ingresos</h5>
+        </div>
+        <span class="status-pill available">+14.8% mensual</span>
+      </div>
+      <div class="chart-shell chart-shell-lg">
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-xxl-4">
+    <div class="glass-card p-4 chart-panel h-100">
+      <span class="eyebrow">MEZCLA DE FLOTA</span>
+      <h5 class="mb-4 mt-2">Distribucion por categoria</h5>
+      <div class="chart-shell chart-shell-sm">
+        <canvas id="distributionChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-7">
+    <div class="glass-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <span class="eyebrow">RESERVAS RECIENTES</span>
+          <h5 class="mb-0 mt-2">Reservas en movimiento</h5>
+        </div>
+        <a class="link-accent text-decoration-none" href="{% url 'catalogo' %}">Ver inventario</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-dark align-middle mb-0 app-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Vehiculo</th>
+              <th>Estado</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in recent_reservations %}
+              <tr>
+                <td>{{ item.client }}</td>
+                <td>{{ item.vehicle }}</td>
+                <td><span class="status-pill {% if item.status == 'Pendiente' %}rented{% else %}available{% endif %}">{{ item.status }}</span></td>
+                <td>{{ item.total }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-5">
+    <div class="glass-card p-4 mb-4">
+      <span class="eyebrow">ACTIVIDAD DE RESERVAS</span>
+      <h5 class="mb-4 mt-2">Demanda semanal</h5>
+      <div class="chart-shell chart-shell-md">
+        <canvas id="activityChart"></canvas>
+      </div>
+    </div>
+    <div class="glass-soft alerts-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Alertas prioritarias</h6>
+        <span class="status-pill rented">3 urgentes</span>
+      </div>
+      <ul class="alert-list">
+        <li><strong>BMW X5</strong> con aprobacion contractual vencida por 6 h.</li>
+        <li><strong>Mercedes Sprinter</strong> con mantenimiento programado para manana.</li>
+        <li><strong>Kia Picanto</strong> con devolucion no registrada tras el check-out esperado.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %}

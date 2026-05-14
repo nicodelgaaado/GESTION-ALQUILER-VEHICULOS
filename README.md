@@ -340,7 +340,3 @@ GESTION-ALQUILER-VEHICULOS/
   requirements.txt
   README.md
 ```
-
-## Estado del proyecto
-
-La implementacion actual cubre el nucleo backend y administrativo del sistema de alquiler. La siguiente fase natural es construir la interfaz web del cliente/administrador y agregar dashboard con graficos de uso e ingresos.

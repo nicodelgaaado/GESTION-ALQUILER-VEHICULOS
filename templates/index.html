@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}FleetFlow | Inicio{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+  <div class="container py-5">
+    <div class="row align-items-center g-4 py-5">
+      <div class="col-lg-6">
+        <span class="eyebrow">SISTEMA DE GESTION DE ALQUILER VEHICULAR</span>
+        <h1 class="display-title mt-3">Escala tu flota con automatizacion inteligente.</h1>
+        <p class="hero-copy">FleetFlow convierte reservas, contratos, ingresos y disponibilidad vehicular en un centro de control premium para operadores ambiciosos.</p>
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          <a class="btn btn-gradient btn-lg px-4" href="{% url 'register' %}">Comenzar prueba</a>
+          <a class="btn btn-glass btn-lg px-4" href="{% url 'dashboard' %}">Ver demo del panel</a>
+        </div>
+        <div class="row g-3 mt-5">
+          {% for stat in hero_stats %}
+            <div class="col-sm-4">
+              <div class="glass-card stat-card h-100">
+                <span class="eyebrow">{{ stat.label }}</span>
+                <h3>{{ stat.value }}</h3>
+                <p>{{ stat.delta }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="glass-card hero-panel">
+          <div class="panel-header">
+            <span>Pulso operativo en vivo</span>
+            <span class="status-dot"></span>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-6">
+              <div class="metric-tile accent-purple">
+                <small>Ingreso diario</small>
+                <strong>$18,420</strong>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="metric-tile accent-blue">
+                <small>Tasa de uso</small>
+                <strong>92%</strong>
+              </div>
+            </div>
+          </div>
+          <div class="hero-chart">
+            <div class="hero-bars">
+              <span style="height: 42%"></span>
+              <span style="height: 55%"></span>
+              <span style="height: 68%"></span>
+              <span style="height: 72%"></span>
+              <span style="height: 88%"></span>
+              <span style="height: 82%"></span>
+              <span style="height: 94%"></span>
+            </div>
+          </div>
+          <div class="hero-visual mt-4">
+            <img src="https://picsum.photos/seed/fleetflow-hero/1200/720" alt="Vista conceptual de la plataforma FleetFlow" loading="lazy" referrerpolicy="no-referrer">
+          </div>
+          <div class="glass-soft fleet-strip mt-4">
+            <div>
+              <small>Lujo</small>
+              <strong>48 unidades</strong>
+            </div>
+            <div>
+              <small>Comercial</small>
+              <strong>31 unidades</strong>
+            </div>
+            <div>
+              <small>Electrico</small>
+              <strong>26 unidades</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container">
+    <div class="section-heading">
+      <span class="eyebrow">POR QUE LOS EQUIPOS ELIGEN FLEETFLOW</span>
+      <h2>Disenado como un dashboard fintech premium, afinado para operar flotas.</h2>
+    </div>
+    <div class="row g-4 mt-1">
+      {% for feature in features %}
+        <div class="col-md-6 col-xl-3">
+          <div class="glass-card feature-card h-100">
+            <div class="feature-icon"><i class="bi bi-stars"></i></div>
+            <h5>{{ feature }}</h5>
+            <p>Flujos claros, senales modernas e interacciones pulidas para operadores que necesitan velocidad.</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container">
+    <div class="glass-card p-4 p-lg-5">
+      <div class="row g-4 align-items-center">
+        <div class="col-lg-6">
+          <span class="eyebrow">PRUEBA SOCIAL</span>
+          <h2 class="mb-3">"Reducimos el tiempo de aprobacion de horas a minutos."</h2>
+          <p class="text-body-tertiary mb-0">Equipos de alquiler empresarial usan FleetFlow para unificar catalogo, aprobaciones y contratos sin perder la claridad de un dashboard ejecutivo premium.</p>
+        </div>
+        <div class="col-lg-6">
+          <div class="row g-3">
+            {% for tier in pricing %}
+              <div class="col-md-4">
+                <div class="pricing-card {% if tier.featured %}featured{% endif %}">
+                  <span class="eyebrow">{{ tier.name }}</span>
+                  <h3>{{ tier.price }}</h3>
+                  <p>Por espacio de trabajo / mes</p>
+                  <a class="btn {% if tier.featured %}btn-gradient{% else %}btn-glass{% endif %} w-100" href="{% url 'register' %}">Elegir plan</a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

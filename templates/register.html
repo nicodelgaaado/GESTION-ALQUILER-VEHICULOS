@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}FleetFlow | Registro{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="container py-5">
+    <div class="row justify-content-center align-items-center g-4 min-vh-75">
+      <div class="col-lg-6">
+        <div class="glass-card auth-card">
+          <span class="eyebrow">CREAR ESPACIO</span>
+          <h1 class="h2 mt-3 mb-2">Crea acceso como cliente o administrador.</h1>
+          <form class="row g-3 mt-2" method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+              <div class="col-12">
+                <div class="form-feedback form-feedback-error">{{ form.non_field_errors|join:" " }}</div>
+              </div>
+            {% endif %}
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
+              {{ form.full_name }}
+              {% if form.full_name.errors %}
+                <div class="form-feedback form-feedback-error">{{ form.full_name.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.company.id_for_label }}">{{ form.company.label }}</label>
+              {{ form.company }}
+              {% if form.company.errors %}
+                <div class="form-feedback form-feedback-error">{{ form.company.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+              {{ form.username }}
+              {% if form.username.errors %}
+                <div class="form-feedback form-feedback-error">{{ form.username.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+              {{ form.password1 }}
+              {% if form.password1.errors %}
+                <div class="form-feedback form-feedback-error">{{ form.password1.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+              {{ form.password2 }}
+              {% if form.password2.errors %}
+                <div class="form-feedback form-feedback-error">{{ form.password2.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
+              {{ form.role }}
+              {% if form.role.errors %}
+                <div class="form-feedback form-feedback-error">{{ form.role.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                {{ form.terms }}
+                <label class="form-check-label" for="{{ form.terms.id_for_label }}">{{ form.terms.label }}</label>
+              </div>
+              {% if form.terms.errors %}
+                <div class="form-feedback form-feedback-error">{{ form.terms.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+            <div class="col-12">
+              <button class="btn btn-gradient btn-lg w-100" type="submit">Crear cuenta</button>
+            </div>
+          </form>
+          <p class="text-body-tertiary mt-4 mb-0">Ya tienes acceso? <a class="link-accent text-decoration-none" href="{% url 'login' %}">Inicia sesion</a></p>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="glass-card auth-aside h-100">
+          <span class="eyebrow">POR QUE SE SIENTE PREMIUM</span>
+          <h5 class="mt-3">Pensado para operadores que quieren claridad, no ruido.</h5>
+          <div class="d-grid gap-3 mt-4">
+            {% for benefit in benefits %}
+              <div class="d-flex gap-3 align-items-start">
+                <span class="feature-icon small"><i class="bi bi-check2"></i></span>
+                <p class="mb-0 text-body-tertiary">{{ benefit }}</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
