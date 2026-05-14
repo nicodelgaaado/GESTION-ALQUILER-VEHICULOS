@@ -1,0 +1,37 @@
+<aside class="app-sidebar glass-card">
+  <div class="sidebar-header">
+    <div class="brand-mark"><i class="bi bi-ev-front-fill"></i></div>
+    <div>
+      <h1>FleetFlow AI</h1>
+      <p>{{ account_role }} · Suite premium</p>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="{% if active_page == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+      <i class="bi bi-grid-1x2-fill"></i><span>Panel</span>
+    </a>
+    <a class="{% if active_page == 'catalogo' %}active{% endif %}" href="{% url 'catalogo' %}">
+      <i class="bi bi-car-front-fill"></i><span>Catalogo</span>
+    </a>
+    <a class="{% if active_page == 'contratos' %}active{% endif %}" href="{% url 'contratos' %}">
+      <i class="bi bi-file-earmark-richtext-fill"></i><span>Contratos</span>
+    </a>
+    {% if is_admin %}
+      <a href="{% url 'admin:index' %}">
+        <i class="bi bi-shield-lock-fill"></i><span>Administracion</span>
+      </a>
+    {% else %}
+      <a href="{% url 'contratos' %}">
+        <i class="bi bi-person-badge-fill"></i><span>Mi cuenta</span>
+      </a>
+    {% endif %}
+    <a href="{% url 'logout' %}">
+      <i class="bi bi-box-arrow-left"></i><span>Salir</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer glass-soft">
+    <span class="eyebrow">{% if is_admin %}SALUD OPERATIVA{% else %}ACCESO{% endif %}</span>
+    <h6>{% if is_admin %}Control total del negocio{% else %}Portal de cliente{% endif %}</h6>
+    <p>{% if is_admin %}Aprueba contratos, monitorea reservas y opera la flota desde el panel central.{% else %}Consulta tus reservas, descarga contratos y sigue el estado de cada alquiler.{% endif %}</p>
+  </div>
+</aside>
