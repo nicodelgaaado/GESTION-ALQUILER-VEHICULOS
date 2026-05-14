@@ -16,9 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from . import ui_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', ui_views.home, name='home'),
+    path('login/', ui_views.login_view, name='login'),
+    path('logout/', ui_views.logout_view, name='logout'),
+    path('register/', ui_views.register_view, name='register'),
+    path('catalogo/', ui_views.catalogo, name='catalogo'),
+    path('dashboard/', ui_views.dashboard, name='dashboard'),
+    path('contratos/', ui_views.contratos, name='contratos'),
     path('api/', include('vehiculo.urls')),
     path('api/', include('reservas.urls')),
 ]
