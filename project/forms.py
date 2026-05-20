@@ -60,7 +60,7 @@ class FleetFlowRegistrationForm(UserCreationForm):
         label="Rol",
         choices=[
             ("cliente", "Cliente"),
-            ("admin", "Administrador"),
+            ("administrador", "Administrador"),
         ],
         widget=forms.Select(attrs={"class": "form-select app-input"}),
     )
@@ -110,7 +110,7 @@ class FleetFlowRegistrationForm(UserCreationForm):
         user.last_name = name_parts[1] if len(name_parts) > 1 else ""
         user.email = self.cleaned_data["username"]
         user.username = self.cleaned_data["username"]
-        user.role = self.cleaned_data["role"]
+        user.is_staff = self.cleaned_data["role"] == "administrador"
         if commit:
             user.save()
         return user
@@ -342,15 +342,6 @@ class ReservaFormCliente(forms.ModelForm):
                 'required': True,
             }),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Limitar el campo `vehiculo` a los vehículos actualmente marcados como disponibles
-        try:
-            self.fields['vehiculo'].queryset = Vehiculo.disponibles().select_related('categoria').order_by('marca', 'modelo')
-        except Exception:
-            # En caso de que Vehiculo no esté disponible por importe circular durante tests, usar el queryset por defecto
-            pass
 
     def clean(self):
         """Validación completa incluyendo solapamiento."""
