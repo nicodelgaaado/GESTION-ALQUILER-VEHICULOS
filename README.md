@@ -1,283 +1,232 @@
-# Gestion de Alquiler de Vehiculos
+# FleetFlow — Gestión de Alquiler de Vehículos
 
-Sistema Django para administrar el ciclo completo de alquiler de vehiculos: catalogo de vehiculos, categorias, tarifas, disponibilidad, reservas, check-in, check-out y generacion de contrato PDF.
+Sistema Django 6.0 para administrar el ciclo completo de alquiler vehicular: catálogo, categorías, tarifas, disponibilidad, reservas, check-in/check-out, contratos PDF, dashboard con gráficos y panel administrativo con control de roles.
 
-El proyecto corresponde al alcance "Sistema de Gestion de Alquiler de Vehiculos" del trabajo final de Django. La base actual implementa el nucleo tecnico del dominio y deja la estructura lista para ampliar interfaz web, graficos, reportes y despliegue con PostgreSQL.
+## Credenciales locales
 
-## Alcance funcional
+Las credenciales y datos iniciales de catálogo se crean de forma repetible con:
 
-### Implementado
+```powershell
+python manage.py seed_initial_data
+```
 
-- Autenticacion con usuarios Django.
-- Separacion de permisos:
-  - Administradores: usuarios con `is_staff=True`.
-  - Clientes: usuarios autenticados normales.
-- CRUD JSON de categorias, tarifas y vehiculos.
-- Registro de reservas por cliente.
-- Control de disponibilidad por fechas.
-- Prevencion de doble reserva por solapamiento.
-- Calculo automatico del valor total segun dias y tarifa diaria.
-- Flujo de alquiler:
-  - Check-in para iniciar el alquiler.
-  - Check-out para registrar la devolucion.
-- Contrato PDF dinamico por reserva.
-- Panel administrativo de Django para consultar y gestionar datos.
-- Configuracion para PostgreSQL por `DATABASE_URL` con fallback SQLite local.
-- Pruebas automatizadas del flujo principal.
+Este comando no crea reservas ni estados operativos de muestra. Las reservas, ingresos, disponibilidad y gráficos se alimentan únicamente de los datos reales creados desde la aplicación.
 
-### Preparado para extender
+| Rol | Email | Contraseña |
+|---|---|---|
+| Administrador | `admin@fleetflow.com` | `admin` |
+| Cliente | `cliente@fleetflow.com` | `cliente123` |
 
-- Dashboard administrativo con filtros avanzados y metricas.
-- Graficos de autos mas alquilados e ingresos por mes.
-- Envio de contratos PDF por correo.
-- Interfaz web para clientes y administradores.
-- Despliegue en Render o Heroku usando PostgreSQL.
 
-## Arquitectura tecnica
+## Funcionalidades implementadas
 
-El sistema esta construido con Django 6 y separa el dominio en dos apps principales:
+### Autenticación y roles
+- Modelo `CustomUser` con campos `role` (`admin` / `cliente`), `empresa`, `teléfono`
+- Registro con selección de rol (Administrador o Cliente)
+- Login con email y contraseña
+- Mixins `AdminRequiredMixin` y `ClienteRequiredMixin` con redirección y mensajes
+- Sidebar adaptativa según el rol del usuario
 
-- `vehiculo`: catalogo operativo del negocio.
-  - `Categoria`: clasifica vehiculos y agrupa tarifas.
-  - `Tarifa`: precio diario activo por categoria.
-  - `Vehiculo`: datos de placa, marca, modelo, estado y kilometraje.
-- `reservas`: proceso transaccional de alquiler.
-  - `Reserva`: usuario, vehiculo, fechas, estado, tarifa aplicada, total y datos de check-in/check-out.
+### Catálogo de vehículos (MVT)
+- **Administradores**: CRUD completo de vehículos, categorías y tarifas
+- **Clientes**: Vista de catálogo con filtros (búsqueda por marca/modelo, categoría)
+- Listado paginado con búsqueda y filtros por estado/categoría
+- Formularios con widgets Bootstrap y validaciones (placa única, año entre 1980-actual, precio positivo)
 
-La API REST es nativa de Django, sin Django REST Framework. Las respuestas se entregan en JSON mediante `JsonResponse`, y los contratos se generan en servidor con ReportLab.
+### Reservas
+- Creación de reservas con validación de fechas
+- Prevención de solapamiento (no permite dos reservas activas en el mismo vehículo y rango de fechas)
+- Cálculo automático del total (tarifa diaria × días)
+- Flujo completo: pendiente → confirmada → en_alquiler → devuelta
+- Cancelación de reservas
+- Check-in / Check-out con registro de kilometraje
+- Vista para clientes: "Mis reservas" con detalle y timeline
+- Vista para administradores: CRUD completo, filtros, acciones de estado y reporte PDF
 
-## Modelo de datos
+### Dashboard y gráficos
+- Panel con KPIs (alquileres activos, ingresos, utilización, devoluciones)
+- Gráfico de ingresos mensuales (línea) conectado a API real
+- Gráfico de distribución por estado de reservas (dona)
+- Gráfico de top 5 vehículos más alquilados (barras)
+- Alertas operativas
+- Dashboard admin con métricas adicionales (flota total, mantenimiento, próximas reservas)
 
-### Categoria
+### API REST
+- Endpoints JSON para categorías, tarifas, vehículos y reservas
+- Endpoints de disponibilidad por fechas
+- Endpoints para gráficos (top-vehículos, ingresos-mensuales, estado-reservas)
+- Autenticación por sesión o Basic Auth
+- Control de permisos: solo administradores pueden crear/editar/eliminar
 
-Campos principales:
+### Contrato PDF
+- Generación dinámica con ReportLab
+- Membrete FleetFlow, datos del cliente, vehículo y facturación
+- Tabla de conceptos con tarifa diaria, días y total
+- Sección de firmas para cliente y administrador
+- Descarga con nombre `contrato-CTR-{id}.pdf`
 
-- `nombre`: nombre unico de la categoria.
-- `descripcion`: detalle opcional.
+### Interfaz de usuario
+- Tema oscuro con glassmorphism (backdrop-filter, gradientes)
+- Bootstrap 5.3.7 + Bootstrap Icons + Chart.js 4.4.3
+- Sidebar con navegación contextual (admin vs cliente)
+- Barra de búsqueda funcional (redirige a vehículos o catálogo según el rol)
+- Diseño responsive (3 breakpoints)
+- Formularios con estilos coherentes (inputs, selects, checkboxes en modo oscuro)
 
-### Tarifa
+## Arquitectura
 
-Campos principales:
+```text
+GESTION-ALQUILER-VEHICULOS/
+├── manage.py
+├── requirements.txt
+├── db.sqlite3
+├── project/                  # Configuración Django
+│   ├── settings.py
+│   ├── urls.py               # Rutas raíz
+│   ├── forms.py              # Formularios globales
+│   ├── ui_views.py           # Vistas MVT (home, login, dashboard, catálogo, contratos)
+│   └── image_services.py     # Servicio de imágenes con fallback
+├── usuarios/                 # Gestión de usuarios
+│   ├── models.py             # CustomUser con roles
+│   └── admin.py
+├── vehiculo/                 # Catálogo de vehículos
+│   ├── models.py             # Categoria, Tarifa, Vehiculo
+│   ├── views.py              # API REST vehicular
+│   └── urls.py
+├── reservas/                 # Proceso de alquiler
+│   ├── models.py             # Reserva con clean(), save(), check-in/out
+│   ├── views.py              # API REST + PDF + gráficos
+│   ├── vistas_mvt.py         # Vistas MVT con control de roles
+│   └── urls.py
+├── templates/                # Plantillas Django
+│   ├── base.html
+│   ├── dashboard.html
+│   ├── catalogo.html
+│   ├── contratos.html
+│   ├── login.html / register.html
+│   ├── vehiculo/             # CRUD vehículos (6 templates)
+│   ├── reservas/             # Reservas (4 templates)
+│   ├── dashboard_admin.html  # Dashboard admin
+│   └── components/           # navbar, sidebar, messages
+└── static/
+    ├── css/app.css           # Estilos oscuros con glassmorphism
+    ├── js/app.js             # Chart.js conectado a APIs reales
+    └── images/               # Placeholder SVG de vehículos
+```
 
-- `categoria`: relacion con `Categoria`.
-- `precio_diario`: valor diario del alquiler.
-- `activa`: indica si la tarifa puede usarse para nuevas reservas.
+## URLs del sistema
 
-### Vehiculo
+### Públicas
+| Ruta | Descripción |
+|---|---|
+| `/` | Landing page |
+| `/login/` | Inicio de sesión |
+| `/register/` | Registro de usuario |
 
-Campos principales:
+### Dashboard (autenticado)
+| Ruta | Descripción |
+|---|---|
+| `/dashboard/` | Panel analítico con KPIs y gráficos |
+| `/catalogo/` | Catálogo de vehículos |
+| `/contratos/` | Gestión de contratos con timeline |
 
-- `placa`: identificador unico del vehiculo.
-- `marca`, `modelo`, `anio`.
-- `categoria`: relacion con `Categoria`.
-- `estado`: `disponible`, `mantenimiento` o `inactivo`.
-- `kilometraje`.
-- `descripcion`.
+### Admin MVT
+| Ruta | Descripción |
+|---|---|
+| `/admin/vehiculos/` | Lista de vehículos |
+| `/admin/vehiculos/crear/` | Nuevo vehículo |
+| `/admin/vehiculos/<id>/` | Detalle |
+| `/admin/vehiculos/<id>/editar/` | Editar |
+| `/admin/vehiculos/<id>/eliminar/` | Eliminar |
+| `/admin/categorias/` | Lista de categorías |
+| `/admin/categorias/crear/` | Nueva categoría |
+| `/admin/categorias/<id>/editar/` | Editar categoría |
+| `/admin/categorias/<id>/eliminar/` | Eliminar categoría |
+| `/admin/tarifas/` | Lista de tarifas |
+| `/admin/tarifas/crear/` | Nueva tarifa |
+| `/admin/tarifas/<id>/editar/` | Editar tarifa |
+| `/admin/tarifas/<id>/eliminar/` | Eliminar tarifa |
+| `/admin/reservas/` | Lista de reservas (admin) |
+| `/admin/reservas/crear/` | Nueva reserva administrativa |
+| `/admin/reservas/<id>/` | Detalle de reserva administrativa |
+| `/admin/reservas/<id>/editar/` | Editar reserva administrativa |
+| `/admin/reservas/<id>/eliminar/` | Cancelar reserva administrativa |
+| `/admin/dashboard/` | Dashboard ejecutivo |
 
-### Reserva
+### Cliente MVT
+| Ruta | Descripción |
+|---|---|
+| `/catalogo/` | Catálogo para clientes |
+| `/mis-reservas/` | Reservas del cliente |
+| `/reservar/` | Crear reserva |
+| `/reservas/<id>/` | Detalle de reserva |
 
-Campos principales:
+### API REST
+| Ruta | Descripción |
+|---|---|
+| `GET/POST /api/categorias/` | CRUD categorías |
+| `GET/PUT/PATCH/DELETE /api/categorias/<id>/` | Detalle categoría |
+| `GET/POST /api/tarifas/` | CRUD tarifas |
+| `GET/PUT/PATCH/DELETE /api/tarifas/<id>/` | Detalle tarifa |
+| `GET/POST /api/vehiculos/` | CRUD vehículos |
+| `GET/PUT/PATCH/DELETE /api/vehiculos/<id>/` | Detalle vehículo |
+| `GET /api/vehiculos/<id>/disponibilidad/` | Disponibilidad |
+| `GET/POST /api/reservas/` | CRUD reservas |
+| `GET/PUT/PATCH/DELETE /api/reservas/<id>/` | Detalle reserva |
+| `POST /api/reservas/<id>/check-in/` | Check-in |
+| `POST /api/reservas/<id>/check-out/` | Check-out |
+| `GET /api/reservas/<id>/contrato.pdf` | Descargar PDF |
+| `GET /api/reservas/reporte.pdf` | Reporte PDF filtrable de reservas |
+| `GET /api/graficos/ingresos-mensuales/` | Ingresos según usuario autenticado |
+| `GET /api/graficos/top-vehiculos/` | Top vehículos según usuario autenticado |
+| `GET /api/graficos/estado-reservas/` | Estados según usuario autenticado |
 
-- `usuario`: cliente asociado.
-- `vehiculo`: vehiculo reservado.
-- `fecha_inicio`, `fecha_fin`.
-- `estado`: `pendiente`, `confirmada`, `en_alquiler`, `devuelta` o `cancelada`.
-- `tarifa_diaria`: tarifa congelada al momento de reservar.
-- `total`: valor calculado automaticamente.
-- `check_in`, `check_out`.
-- `kilometraje_salida`, `kilometraje_retorno`.
+### Django Admin
+| Ruta | Descripción |
+|---|---|
+| `/admin/` | Panel administrativo Django |
 
 ## Reglas de negocio
 
-- Un vehiculo solo puede reservarse si esta en estado `disponible`.
-- No se permiten reservas con fechas solapadas para el mismo vehiculo si la reserva existente esta activa.
-- Las reservas activas consideradas para disponibilidad son:
-  - `pendiente`
-  - `confirmada`
-  - `en_alquiler`
-- La fecha de fin debe ser posterior a la fecha de inicio.
-- Los dias facturados se calculan como diferencia entre `fecha_fin` y `fecha_inicio`, con minimo de 1 dia.
-- El total se calcula como:
+- Un vehículo solo puede reservarse si está en estado `disponible`
+- No se permiten reservas con fechas solapadas para el mismo vehículo si la reserva existente está activa
+- Estados activos para solapamiento: `pendiente`, `confirmada`, `en_alquiler`
+- La fecha de fin debe ser posterior a la fecha de inicio
+- Días facturados = `fecha_fin - fecha_inicio` (mínimo 1 día)
+- Total = días × tarifa_diaria
+- Al crear una reserva se toma la tarifa activa de menor precio de la categoría
+- Check-in solo para reservas `pendiente` o `confirmada`
+- Check-out solo para reservas `en_alquiler`
 
-```text
-total = dias_facturados * tarifa_diaria
-```
-
-- Al crear una reserva se toma la tarifa activa de menor precio de la categoria del vehiculo.
-- El check-in solo aplica a reservas `pendiente` o `confirmada`.
-- El check-out solo aplica a reservas `en_alquiler`.
-- Si se informa kilometraje en check-in/check-out, se actualiza tambien el kilometraje del vehiculo.
-
-## API REST
-
-Los endpoints administrativos requieren un usuario con `is_staff=True`. Las reservas requieren usuario autenticado.
-
-La autenticacion puede hacerse por sesion Django o por Basic Auth en la cabecera `Authorization`.
-
-### Categorias
-
-- `GET /api/categorias/`
-- `POST /api/categorias/`
-- `GET /api/categorias/<id>/`
-- `PATCH /api/categorias/<id>/`
-- `PUT /api/categorias/<id>/`
-- `DELETE /api/categorias/<id>/`
-
-Ejemplo `POST /api/categorias/`:
-
-```json
-{
-  "nombre": "SUV",
-  "descripcion": "Vehiculos familiares y camionetas"
-}
-```
-
-### Tarifas
-
-- `GET /api/tarifas/`
-- `POST /api/tarifas/`
-- `GET /api/tarifas/<id>/`
-- `PATCH /api/tarifas/<id>/`
-- `PUT /api/tarifas/<id>/`
-- `DELETE /api/tarifas/<id>/`
-
-Ejemplo `POST /api/tarifas/`:
-
-```json
-{
-  "categoria_id": 1,
-  "precio_diario": "150000.00",
-  "activa": true
-}
-```
-
-### Vehiculos
-
-- `GET /api/vehiculos/`
-- `POST /api/vehiculos/`
-- `GET /api/vehiculos/<id>/`
-- `PATCH /api/vehiculos/<id>/`
-- `PUT /api/vehiculos/<id>/`
-- `DELETE /api/vehiculos/<id>/`
-- `GET /api/vehiculos/<id>/disponibilidad/?fecha_inicio=YYYY-MM-DD&fecha_fin=YYYY-MM-DD`
-
-Ejemplo `POST /api/vehiculos/`:
-
-```json
-{
-  "placa": "ABC123",
-  "marca": "Toyota",
-  "modelo": "RAV4",
-  "anio": 2024,
-  "categoria_id": 1,
-  "estado": "disponible",
-  "kilometraje": 1000,
-  "descripcion": "Vehiculo automatico"
-}
-```
-
-### Reservas y alquileres
-
-- `GET /api/reservas/`
-- `POST /api/reservas/`
-- `GET /api/reservas/<id>/`
-- `PATCH /api/reservas/<id>/`
-- `PUT /api/reservas/<id>/`
-- `DELETE /api/reservas/<id>/`
-- `POST /api/reservas/<id>/check-in/`
-- `POST /api/reservas/<id>/check-out/`
-- `GET /api/reservas/<id>/contrato.pdf`
-
-Ejemplo `POST /api/reservas/`:
-
-```json
-{
-  "vehiculo_id": 1,
-  "fecha_inicio": "2026-06-01",
-  "fecha_fin": "2026-06-04"
-}
-```
-
-Ejemplo `POST /api/reservas/<id>/check-in/`:
-
-```json
-{
-  "kilometraje_salida": 1200
-}
-```
-
-Ejemplo `POST /api/reservas/<id>/check-out/`:
-
-```json
-{
-  "kilometraje_retorno": 1350
-}
-```
-
-## Panel administrativo
-
-El panel de Django esta disponible en:
-
-```text
-/admin/
-```
-
-Desde ahi se pueden administrar:
-
-- Categorias
-- Tarifas
-- Vehiculos
-- Reservas
-- Usuarios y permisos
-
-Para crear un administrador local:
-
-```powershell
-python manage.py createsuperuser
-```
-
-## Configuracion del entorno
+## Instalación
 
 ### Requisitos
+- Python 3.13+
+- SQLite (desarrollo) o PostgreSQL (producción)
 
-- Python 3.14
-- PostgreSQL para entorno productivo o despliegue
-- SQLite opcional para desarrollo local
-
-### Instalacion local
+### Pasos
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-```
-
-### Base de datos PostgreSQL
-
-Configurar `DATABASE_URL`:
-
-```powershell
-$env:DATABASE_URL="postgresql://usuario:password@localhost:5432/gestion_alquiler"
-```
-
-Si `DATABASE_URL` no existe, el proyecto usa `db.sqlite3` local como fallback de desarrollo.
-
-### Migraciones y servidor
-
-```powershell
+python -m venv ambiente
+.\ambiente\Scripts\Activate.ps1
+pip install -r requirements.txt
 python manage.py migrate
+python manage.py seed_initial_data
 python manage.py runserver
 ```
 
-Servidor local:
+Servidor local: http://127.0.0.1:8000/
 
-```text
-http://127.0.0.1:8000/
-```
+### Variables de entorno
 
-## Validacion tecnica
+| Variable | Descripción |
+|---|---|
+| `DATABASE_URL` | Conexión PostgreSQL (opcional, fallback a SQLite) |
+| `SECRET_KEY` | Clave secreta de Django |
+| `DEBUG` | `False` en producción |
+| `ALLOWED_HOSTS` | Dominios permitidos |
 
-Comandos recomendados antes de publicar cambios:
+## Validación
 
 ```powershell
 python manage.py check
@@ -285,58 +234,14 @@ python manage.py makemigrations --check --dry-run
 python manage.py test
 ```
 
-Validaciones cubiertas por pruebas:
-
-- Creacion de catalogo por administrador.
-- Reserva con calculo automatico de total.
-- Bloqueo de reserva solapada.
-- Consulta de disponibilidad.
-- Check-in.
-- Check-out.
-- Descarga de contrato PDF.
-
 ## Despliegue
 
-El proyecto esta preparado para desplegarse con PostgreSQL mediante `DATABASE_URL`.
+El despliegue queda fuera del alcance de esta entrega local. El proyecto está preparado para desarrollo con SQLite y puede adaptarse posteriormente a Render, Railway o PythonAnywhere configurando variables de entorno y una base de datos compatible.
 
-Variables esperadas en despliegue:
+## Dependencias principales
 
-- `DATABASE_URL`: conexion PostgreSQL.
-- `SECRET_KEY`: clave segura de Django.
-- `DEBUG`: `False` en produccion.
-- `ALLOWED_HOSTS`: dominios permitidos.
-
-Dependencias principales:
-
-- `Django`
+- `Django==6.0.3`
 - `dj-database-url`
 - `psycopg[binary]`
 - `reportlab`
 - `gunicorn`
-
-## Estructura principal
-
-```text
-GESTION-ALQUILER-VEHICULOS/
-  manage.py
-  project/
-    settings.py
-    urls.py
-    asgi.py
-    wsgi.py
-  vehiculo/
-    models.py
-    views.py
-    urls.py
-    admin.py
-    migrations/
-  reservas/
-    models.py
-    views.py
-    urls.py
-    admin.py
-    tests.py
-    migrations/
-  requirements.txt
-  README.md
-```

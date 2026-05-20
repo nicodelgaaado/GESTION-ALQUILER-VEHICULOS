@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}FleetFlow | Cancelar reserva{% endblock %}
+{% block page_heading %}Cancelar reserva CTR-{{ reserva.id|stringformat:"05d" }}{% endblock %}
+{% block page_subheading %}La reserva no se elimina fisicamente; queda marcada como cancelada para trazabilidad.{% endblock %}
+
+{% block content %}
+<section class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="glass-card p-4">
+      <span class="eyebrow">CONFIRMACION</span>
+      <h5 class="mt-2 mb-3">Confirmar cancelacion operativa</h5>
+      <p class="text-body-tertiary">
+        Esta accion marcara como cancelada la reserva de
+        <strong>{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</strong>
+        para el vehiculo <strong>{{ reserva.vehiculo.marca }} {{ reserva.vehiculo.modelo }} ({{ reserva.vehiculo.placa }})</strong>.
+      </p>
+      <div class="row g-3 my-3">
+        <div class="col-md-4">
+          <div class="metric-tile">
+            <small>Inicio</small>
+            <strong>{{ reserva.fecha_inicio|date:"d/m/Y" }}</strong>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-tile">
+            <small>Fin</small>
+            <strong>{{ reserva.fecha_fin|date:"d/m/Y" }}</strong>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-tile">
+            <small>Estado actual</small>
+            <strong>{{ reserva.get_estado_display }}</strong>
+          </div>
+        </div>
+      </div>
+      <form method="post" class="d-flex gap-2 flex-wrap">
+        {% csrf_token %}
+        <button class="btn btn-gradient" type="submit"><i class="bi bi-x-circle"></i> Cancelar reserva</button>
+        <a class="btn btn-glass" href="{% url 'reserva_detail_admin' reserva.id %}"><i class="bi bi-arrow-left"></i> Volver</a>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

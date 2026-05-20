@@ -17,16 +17,18 @@ def _fetch_json(url, headers=None, timeout=12):
             **(headers or {}),
         },
     )
-    with urlopen(request, timeout=timeout) as response:
-        return json.loads(response.read().decode("utf-8"))
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except Exception:
+        return None
 
 
-def _picsum_fallback(seed):
-    safe_seed = seed.replace(" ", "-").replace("/", "-").lower()
+def _static_fallback():
     return {
-        "url": f"https://picsum.photos/seed/{safe_seed}/900/560",
-        "source": "picsum",
-        "credit": "Picsum Photos",
+        "url": "/static/images/placeholder-vehicle.svg",
+        "source": "static",
+        "credit": "",
     }
 
 
@@ -43,6 +45,8 @@ def _wikidata_label(query):
         }
     )
     data = _fetch_json(f"https://www.wikidata.org/w/api.php?{params}")
+    if not data:
+        return "", ""
     match = (data.get("search") or [{}])[0]
     display = match.get("display") or {}
     label = ((display.get("label") or {}).get("value") or "").strip()
@@ -67,6 +71,8 @@ def _commons_image(query):
         }
     )
     data = _fetch_json(f"https://commons.wikimedia.org/w/api.php?{params}")
+    if not data:
+        return None
     pages = (data.get("query") or {}).get("pages") or {}
     if not pages:
         return None
@@ -91,6 +97,8 @@ def _evox_image(make, model, year):
         headers["Authorization"] = f"Bearer {api_key}"
 
     data = _fetch_json(f"{base_url}?{params}", headers=headers)
+    if not data:
+        return None
     candidates = data.get("results") or data.get("vehicles") or data.get("images") or []
     if not candidates:
         return None
@@ -116,6 +124,8 @@ def _unsplash_image(query):
         f"https://api.unsplash.com/search/photos?{params}",
         headers={"Authorization": f"Client-ID {access_key}", "Accept-Version": "v1"},
     )
+    if not data:
+        return None
     first = (data.get("results") or [{}])[0]
     urls = first.get("urls") or {}
     user = first.get("user") or {}
@@ -130,7 +140,6 @@ def _unsplash_image(query):
 
 @lru_cache(maxsize=128)
 def vehicle_image_asset(make, model, year=None, category=None, fallback_seed=None):
-    fallback_seed = fallback_seed or f"{make}-{model}"
     evox_match = _evox_image(make, model, year)
     if evox_match:
         return evox_match
@@ -154,4 +163,4 @@ def vehicle_image_asset(make, model, year=None, category=None, fallback_seed=Non
     if unsplash_match:
         return unsplash_match
 
-    return _picsum_fallback(fallback_seed)
+    return _static_fallback()

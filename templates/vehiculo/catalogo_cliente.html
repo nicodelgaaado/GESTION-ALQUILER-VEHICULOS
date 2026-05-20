@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}FleetFlow | Catálogo{% endblock %}
+{% block page_heading %}Catálogo de vehículos{% endblock %}
+{% block page_subheading %}Vehículos disponibles para alquilar.{% endblock %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-xl-3">
+    <div class="glass-card p-4 sticky-xl-top filter-panel">
+      <span class="eyebrow">FILTROS</span>
+      <h5 class="mb-3 mt-2">Buscar vehículos</h5>
+      <form method="get">
+        <div class="d-grid gap-3">
+          <div>
+            <label class="form-label">Búsqueda</label>
+            <input class="form-control app-input" type="text" name="search" placeholder="Marca, modelo..." value="{{ search }}">
+          </div>
+          <div>
+            <label class="form-label">Categoría</label>
+            <select class="form-select app-input" name="categoria">
+              <option value="">Todas</option>
+              {% for cat in categorias %}
+                <option value="{{ cat.nombre }}" {% if categoria_filter == cat.nombre %}selected{% endif %}>{{ cat.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-glass w-100 mt-3" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-xl-9">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <span class="text-body-tertiary">{{ vehiculos|length }} vehículo{{ vehiculos|length|pluralize:"s" }} disponible{{ vehiculos|length|pluralize:"s" }}</span>
+    </div>
+    <div class="row g-4">
+      {% for vehiculo in vehiculos %}
+        <div class="col-md-6 col-xxl-4">
+          <article class="glass-card vehicle-card h-100">
+            <div class="vehicle-media accent-purple">
+              <span class="plate-pill">{{ vehiculo.placa }}</span>
+              <span class="status-pill available">Disponible</span>
+            </div>
+            <div class="p-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="eyebrow">{{ vehiculo.categoria.nombre }}</span>
+                  <h5 class="mt-2 mb-1">{{ vehiculo.marca }} {{ vehiculo.modelo }}</h5>
+                </div>
+                <div class="price-tag">${{ vehiculo.tarifa_activa.precio_diario|floatformat:0 }}<small>/día</small></div>
+              </div>
+              <div class="spec-row">
+                <span><i class="bi bi-calendar"></i> {{ vehiculo.anio }}</span>
+                <span><i class="bi bi-speedometer2"></i> {{ vehiculo.kilometraje }} km</span>
+              </div>
+              <a class="btn btn-gradient w-100 mt-3" href="{% url 'reserva_create' %}?vehiculo={{ vehiculo.pk }}">Reservar ahora</a>
+            </div>
+          </article>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <div class="glass-card p-5 text-center">
+            <i class="bi bi-car-front" style="font-size: 3rem; color: var(--muted);"></i>
+            <h5 class="mt-3 mb-2">Sin vehículos disponibles</h5>
+            <p class="text-body-tertiary mb-0">No hay vehículos disponibles en este momento. Intenta con otros filtros.</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    {% if is_paginated %}
+      <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}">Anterior</a></li>
+          {% endif %}
+          <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}">Siguiente</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

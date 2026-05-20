@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'usuarios',
     'vehiculo',
     'reservas',
 ]
@@ -120,3 +121,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Configuración de modelo de usuario personalizado
+AUTH_USER_MODEL = 'usuarios.CustomUser'
+
+# Mensajes
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'

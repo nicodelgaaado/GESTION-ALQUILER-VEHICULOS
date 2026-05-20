@@ -27,7 +27,7 @@
           <span class="eyebrow">FLUJO DE INGRESOS</span>
           <h5 class="mb-0 mt-2">Rendimiento mensual de ingresos</h5>
         </div>
-        <span class="status-pill available">+14.8% mensual</span>
+        <span class="status-pill available">{{ revenue_trend_label }}</span>
       </div>
       <div class="chart-shell chart-shell-lg">
         <canvas id="revenueChart"></canvas>
@@ -36,8 +36,8 @@
   </div>
   <div class="col-xxl-4">
     <div class="glass-card p-4 chart-panel h-100">
-      <span class="eyebrow">MEZCLA DE FLOTA</span>
-      <h5 class="mb-4 mt-2">Distribucion por categoria</h5>
+      <span class="eyebrow">ESTADO DE RESERVAS</span>
+      <h5 class="mb-4 mt-2">Distribucion por estado</h5>
       <div class="chart-shell chart-shell-sm">
         <canvas id="distributionChart"></canvas>
       </div>
@@ -70,6 +70,10 @@
                 <td><span class="status-pill {% if item.status == 'Pendiente' %}rented{% else %}available{% endif %}">{{ item.status }}</span></td>
                 <td>{{ item.total }}</td>
               </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-body-tertiary py-4">No hay reservas recientes.</td>
+              </tr>
             {% endfor %}
           </tbody>
         </table>
@@ -87,12 +91,14 @@
     <div class="glass-soft alerts-card">
       <div class="d-flex justify-content-between align-items-center">
         <h6 class="mb-0">Alertas prioritarias</h6>
-        <span class="status-pill rented">3 urgentes</span>
+        <span class="status-pill rented">{{ alerts_count }} activas</span>
       </div>
       <ul class="alert-list">
-        <li><strong>BMW X5</strong> con aprobacion contractual vencida por 6 h.</li>
-        <li><strong>Mercedes Sprinter</strong> con mantenimiento programado para manana.</li>
-        <li><strong>Kia Picanto</strong> con devolucion no registrada tras el check-out esperado.</li>
+        {% for alerta in alerts %}
+          <li>{{ alerta }}</li>
+        {% empty %}
+          <li>No hay alertas operativas con los datos actuales.</li>
+        {% endfor %}
       </ul>
     </div>
   </div>

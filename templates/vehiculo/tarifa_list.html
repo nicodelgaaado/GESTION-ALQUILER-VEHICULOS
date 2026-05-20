@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}FleetFlow | Tarifas{% endblock %}
+{% block page_heading %}Tarifas{% endblock %}
+{% block page_subheading %}Precios diarios por categoria y estado de vigencia.{% endblock %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-12">
+    <div class="glass-card p-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+          <span class="eyebrow">TARIFAS</span>
+          <h5 class="mb-0 mt-2">Configuracion de precios</h5>
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-glass" href="{% url 'categoria_list' %}"><i class="bi bi-tags"></i> Categorias</a>
+          <a class="btn btn-gradient" href="{% url 'tarifa_create' %}"><i class="bi bi-plus-lg"></i> Nueva tarifa</a>
+        </div>
+      </div>
+
+      <form class="row g-3 mb-4" method="get">
+        <div class="col-md-5">
+          <select class="form-select app-input" name="categoria">
+            <option value="">Todas las categorias</option>
+            {% for categoria in categorias %}
+              <option value="{{ categoria.id }}" {% if categoria_filter == categoria.id|stringformat:"s" %}selected{% endif %}>{{ categoria.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <select class="form-select app-input" name="estado">
+            <option value="">Todos los estados</option>
+            <option value="activa" {% if estado_filter == "activa" %}selected{% endif %}>Activas</option>
+            <option value="inactiva" {% if estado_filter == "inactiva" %}selected{% endif %}>Inactivas</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-glass w-100" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
+        </div>
+      </form>
+
+      <div class="table-responsive">
+        <table class="table table-dark align-middle mb-0 app-table">
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Precio diario</th>
+              <th>Estado</th>
+              <th>Creada</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tarifa in tarifas %}
+              <tr>
+                <td><strong>{{ tarifa.categoria.nombre }}</strong></td>
+                <td>${{ tarifa.precio_diario|floatformat:2 }}</td>
+                <td>
+                  <span class="status-pill {% if tarifa.activa %}available{% else %}muted{% endif %}">
+                    {% if tarifa.activa %}Activa{% else %}Inactiva{% endif %}
+                  </span>
+                </td>
+                <td>{{ tarifa.creada|date:"d/m/Y" }}</td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <a class="btn btn-sm btn-glass" href="{% url 'tarifa_update' tarifa.pk %}"><i class="bi bi-pencil"></i></a>
+                    <a class="btn btn-sm btn-glass" href="{% url 'tarifa_delete' tarifa.pk %}"><i class="bi bi-trash"></i></a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-body-tertiary py-4">No hay tarifas registradas.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
