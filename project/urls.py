@@ -27,6 +27,8 @@ urlpatterns = [
     path('catalogo/', ui_views.catalogo, name='catalogo'),
     path('dashboard/', ui_views.dashboard, name='dashboard'),
     path('contratos/', ui_views.contratos, name='contratos'),
+    path('api/hero-image/', ui_views.hero_vehicle_image, name='hero_image'),
+    path('api/fleet-stats/', ui_views.fleet_stats, name='fleet_stats'),
     path('api/', include('vehiculo.urls')),
     path('api/', include('reservas.urls')),
 ]

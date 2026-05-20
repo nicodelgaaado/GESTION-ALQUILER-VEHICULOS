@@ -224,10 +224,33 @@ h1, h2, h3, h4, h5, h6, .navbar-brand strong {
 .hero-chart {
   min-height: 15rem;
   border-radius: 1.2rem;
-  background: linear-gradient(180deg, rgba(167, 139, 250, 0.08), rgba(255, 255, 255, 0.02));
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.65));
   padding: 1.5rem;
+  display: grid;
+  row-gap: 1rem;
+  color: #e5e7ff;
+}
+
+.hero-chart-header {
   display: flex;
-  align-items: end;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.hero-chart-header .chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.hero-chart-header .chart-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: rgba(226, 232, 240, 0.72);
 }
 
 .hero-visual {
@@ -256,8 +279,21 @@ h1, h2, h3, h4, h5, h6, .navbar-brand strong {
 }
 
 .hero-bars span {
-  border-radius: 999px 999px 0 0;
-  background: linear-gradient(180deg, rgba(34, 211, 238, 0.3), rgba(139, 92, 246, 0.95));
+  border-radius: 1rem 1rem 0 0;
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.35), rgba(14, 165, 233, 0.95));
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.2);
+}
+
+.chart-axis {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.9rem;
+  color: rgba(226, 232, 240, 0.8);
+  font-size: 0.8rem;
+}
+
+.chart-axis span {
+  text-align: center;
 }
 
 .panel-header,

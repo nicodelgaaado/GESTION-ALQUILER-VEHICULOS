@@ -1,8 +1,10 @@
 from urllib.parse import urlencode
+import json
 
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -450,3 +452,56 @@ def logout_view(request):
     logout(request)
     messages.info(request, "Sesion cerrada.")
     return redirect("login")
+
+
+def hero_vehicle_image(request):
+    """Devuelve una imagen de vehículo para la sección hero"""
+    try:
+        # Buscar en orden: Tesla primero, luego fallback a otro auto
+        image_asset = vehicle_image_asset("Tesla", "Model 3", 2024, "Electrico", "fleetflow-tesla-hero")
+        return JsonResponse({"url": image_asset.get("url"), "source": image_asset.get("source")})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+def fleet_stats(request):
+    """Devuelve estadísticas en tiempo real de la flota"""
+    try:
+        vehicles = Vehiculo.objects.select_related("categoria").prefetch_related("categoria__tarifas")
+        reservas = Reserva.objects.filter(estado__in=[Reserva.PENDIENTE, Reserva.CONFIRMADA, Reserva.EN_ALQUILER])
+        
+        total_vehicles = vehicles.count()
+        available = sum(1 for v in vehicles if v.estado == Vehiculo.DISPONIBLE)
+        rented = total_vehicles - available
+        
+        total_revenue = sum(float(r.total) for r in Reserva.objects.filter(estado__in=[Reserva.CONFIRMADA, Reserva.DEVUELTA]))
+        daily_revenue = sum(float(r.total) for r in reservas) / max(reservas.count(), 1)
+        
+        # Estadísticas por categoría
+        categories = {}
+        for vehicle in vehicles:
+            cat_name = vehicle.categoria.nombre if vehicle.categoria else "Sin categoría"
+            if cat_name not in categories:
+                categories[cat_name] = {"total": 0, "available": 0}
+            categories[cat_name]["total"] += 1
+            if vehicle.estado == Vehiculo.DISPONIBLE:
+                categories[cat_name]["available"] += 1
+        
+        # Generar datos para las barras del gráfico (últimos 7 días simulado)
+        chart_data = [
+            42, 55, 68, 72, 88, 82, 94  # Porcentajes de utilización
+        ]
+        
+        return JsonResponse({
+            "total_vehicles": total_vehicles,
+            "available": available,
+            "rented": rented,
+            "utilization_rate": round((rented / max(total_vehicles, 1)) * 100),
+            "daily_revenue": round(daily_revenue, 2),
+            "total_revenue": round(total_revenue, 2),
+            "active_reservations": reservas.count(),
+            "categories": categories,
+            "chart_data": chart_data,
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
