@@ -8,9 +8,7 @@
       legend: {
         labels: {
           color: "#cbd5e1",
-          font: {
-            family: "Inter",
-          },
+          font: { family: "Inter" },
         },
       },
     },
@@ -32,86 +30,96 @@
     const distributionChart = document.getElementById("distributionChart");
     const activityChart = document.getElementById("activityChart");
 
-    if (revenueChart) {
-      new Chart(revenueChart, {
-        type: "line",
-        data: {
-          labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul"],
-          datasets: [
-            {
-              label: "Ingresos",
-              data: [82, 95, 88, 118, 132, 141, 148],
-              borderColor: "#8b5cf6",
-              backgroundColor: "rgba(139, 92, 246, 0.18)",
-              fill: true,
-              tension: 0.38,
-              pointRadius: 3,
-              pointBackgroundColor: "#22d3ee",
-              borderWidth: 3,
-            },
-          ],
-        },
-        options: {
-          ...chartDefaults,
-          plugins: {
-            ...chartDefaults.plugins,
-            legend: {
-              display: false,
-            },
-          },
-        },
-      });
-    }
+    const apiBase = "/api/graficos";
 
-    if (distributionChart) {
-      new Chart(distributionChart, {
-        type: "doughnut",
-        data: {
+    Promise.all([
+      fetch(`${apiBase}/ingresos-mensuales/`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${apiBase}/estado-reservas/`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${apiBase}/top-vehiculos/`).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([ingresos, estados, topVehiculos]) => {
+      if (revenueChart) {
+        const data = ingresos || {
+          labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul"],
+          datasets: [{
+            label: "Ingresos",
+            data: [82, 95, 88, 118, 132, 141, 148],
+            borderColor: "#8b5cf6",
+            backgroundColor: "rgba(139, 92, 246, 0.18)",
+            fill: true,
+            tension: 0.38,
+            pointRadius: 3,
+            pointBackgroundColor: "#22d3ee",
+            borderWidth: 3,
+          }],
+        };
+        new Chart(revenueChart, {
+          type: "line",
+          data: data,
+          options: {
+            ...chartDefaults,
+            plugins: { ...chartDefaults.plugins, legend: { display: false } },
+          },
+        });
+      }
+
+      if (distributionChart) {
+        const fallback = {
           labels: ["SUV", "Electrico", "Comercial", "Urbano"],
-          datasets: [
-            {
-              data: [34, 22, 26, 18],
-              backgroundColor: ["#8b5cf6", "#3b82f6", "#22d3ee", "#a78bfa"],
-              borderWidth: 0,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: "bottom",
-              labels: {
-                color: "#cbd5e1",
-                padding: 18,
-                font: {
-                  family: "Inter",
+          datasets: [{
+            data: [34, 22, 26, 18],
+            backgroundColor: ["#8b5cf6", "#3b82f6", "#22d3ee", "#a78bfa"],
+            borderWidth: 0,
+          }],
+        };
+        const data = estados || fallback;
+        new Chart(distributionChart, {
+          type: "doughnut",
+          data: data,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  color: "#cbd5e1",
+                  padding: 18,
+                  font: { family: "Inter" },
                 },
               },
             },
           },
-        },
-      });
-    }
+        });
+      }
 
-    if (activityChart) {
-      new Chart(activityChart, {
-        type: "bar",
-        data: {
+      if (activityChart) {
+        const fallback = {
           labels: ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"],
-          datasets: [
-            {
-              label: "Reservas",
-              data: [14, 18, 13, 22, 25, 19, 16],
-              backgroundColor: ["#3b82f6", "#3b82f6", "#8b5cf6", "#8b5cf6", "#22d3ee", "#3b82f6", "#8b5cf6"],
-              borderRadius: 12,
+          datasets: [{
+            label: "Reservas",
+            data: [14, 18, 13, 22, 25, 19, 16],
+            backgroundColor: ["#3b82f6", "#3b82f6", "#8b5cf6", "#8b5cf6", "#22d3ee", "#3b82f6", "#8b5cf6"],
+            borderRadius: 12,
+          }],
+        };
+        const data = topVehiculos || fallback;
+        new Chart(activityChart, {
+          type: "bar",
+          data: data,
+          options: topVehiculos ? {
+            ...chartDefaults,
+            plugins: {
+              ...chartDefaults.plugins,
+              legend: { display: true, labels: { color: "#cbd5e1", font: { family: "Inter" } } },
             },
-          ],
-        },
-        options: chartDefaults,
-      });
-    }
+            scales: {
+              ...chartDefaults.scales,
+              x: { ...chartDefaults.scales.x, ticks: { ...chartDefaults.scales.x.ticks, maxRotation: 45 } },
+            },
+          } : chartDefaults,
+        });
+      }
+    }).catch(() => {});
   }
 
   if (page === "catalogo") {

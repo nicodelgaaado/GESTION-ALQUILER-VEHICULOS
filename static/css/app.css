@@ -11,6 +11,7 @@
   --cyan: #22d3ee;
   --green: #34d399;
   --red: #f87171;
+  color-scheme: dark;
 }
 
 body {
@@ -353,6 +354,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand strong {
 }
 
 .app-input,
+.form-select,
 .form-select.app-input {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.08);
@@ -364,6 +366,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand strong {
 }
 
 .app-input:focus,
+.form-select:focus,
 .form-select.app-input:focus {
   background: rgba(255, 255, 255, 0.07);
   color: var(--text);
@@ -379,6 +382,39 @@ h1, h2, h3, h4, h5, h6, .navbar-brand strong {
   -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.05) inset;
   transition: background-color 9999s ease-in-out 0s;
 }
+
+/* Dark theme for select elements and their dropdowns */
+select.form-select,
+.form-select.app-input {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='%23cbd5e1' d='M4.646 5.646a.5.5 0 0 1 .708 0L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+}
+
+.form-select.app-input option {
+  background: #0f172a;
+  color: #e7ecff;
+}
+
+select.form-select option:hover,
+select.form-select option:checked,
+.form-select.app-input option:hover,
+.form-select.app-input option:checked {
+  background: #1e293b;
+  color: #fff;
+}
+
+select.form-select option:checked {
+  background: #334155;
+}
+
+.form-select.app-input optgroup {
+  background: #0f172a;
+  color: #94a3b8;
+}
+
+
 
 .form-label {
   color: var(--text);
@@ -510,6 +546,33 @@ h1, h2, h3, h4, h5, h6, .navbar-brand strong {
   color: var(--muted);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.search-chip:focus-within {
+  border-color: rgba(167, 139, 250, 0.55);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+  color: var(--text);
+}
+
+.search-input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: "Inter", sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  width: 180px;
+  transition: width 0.25s ease;
+}
+
+.search-chip:focus-within .search-input {
+  width: 260px;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
 }
 
 .summary-chip {
