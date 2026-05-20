@@ -2,6 +2,9 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
+from vehiculo.models import Vehiculo, Categoria, Tarifa
+from reservas.models import Reserva
+
 
 class FleetFlowAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(
@@ -111,3 +114,258 @@ class FleetFlowRegistrationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+# ============================================================================
+# Formularios ModelForm para el negocio (Vehículos, Categorías, Tarifas, Reservas)
+# ============================================================================
+
+class CategoriaForm(forms.ModelForm):
+    """Formulario para crear/editar categorías de vehículos."""
+
+    class Meta:
+        model = Categoria
+        fields = ['nombre', 'descripcion']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: SUV, Sedan, Comercial',
+                'required': True,
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Descripción de la categoría...',
+                'rows': 3,
+            }),
+        }
+
+    def clean_nombre(self):
+        """Validar que el nombre sea único (case-insensitive)."""
+        nombre = self.cleaned_data['nombre'].strip().title()
+        existe = Categoria.objects.filter(nombre__iexact=nombre)
+        if self.instance.pk:
+            existe = existe.exclude(pk=self.instance.pk)
+        if existe.exists():
+            raise forms.ValidationError('Ya existe una categoría con este nombre.')
+        return nombre
+
+
+class TarifaForm(forms.ModelForm):
+    """Formulario para crear/editar tarifas de alquiler."""
+
+    class Meta:
+        model = Tarifa
+        fields = ['categoria', 'precio_diario', 'activa']
+        widgets = {
+            'categoria': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True,
+            }),
+            'precio_diario': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: 150.00',
+                'step': '0.01',
+                'min': '0',
+                'required': True,
+            }),
+            'activa': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+        }
+
+    def clean_precio_diario(self):
+        """Validar que el precio sea positivo."""
+        precio = self.cleaned_data['precio_diario']
+        if precio <= 0:
+            raise forms.ValidationError('El precio debe ser mayor a 0.')
+        return precio
+
+
+class VehiculoForm(forms.ModelForm):
+    """Formulario para crear/editar vehículos."""
+
+    class Meta:
+        model = Vehiculo
+        fields = ['placa', 'marca', 'modelo', 'anio', 'categoria', 'estado', 
+                  'kilometraje', 'descripcion']
+        widgets = {
+            'placa': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: ABC-1234',
+                'maxlength': '12',
+                'required': True,
+                'style': 'text-transform: uppercase;',
+            }),
+            'marca': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Toyota',
+                'required': True,
+            }),
+            'modelo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Camry',
+                'required': True,
+            }),
+            'anio': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'type': 'number',
+                'min': '1980',
+                'placeholder': 'Ej: 2024',
+                'required': True,
+            }),
+            'categoria': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True,
+            }),
+            'estado': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True,
+            }),
+            'kilometraje': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'type': 'number',
+                'min': '0',
+                'placeholder': 'Km actuales del vehículo',
+                'required': True,
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Características especiales, estado físico, etc...',
+                'rows': 3,
+            }),
+        }
+
+    def clean_placa(self):
+        """Validar que la placa sea única y tenga formato válido."""
+        placa = self.cleaned_data['placa'].strip().upper()
+        existe = Vehiculo.objects.filter(placa__iexact=placa)
+        if self.instance.pk:
+            existe = existe.exclude(pk=self.instance.pk)
+        if existe.exists():
+            raise forms.ValidationError('Ya existe un vehículo con esta placa.')
+        return placa
+
+    def clean_anio(self):
+        """Validar que el año sea razonable."""
+        from datetime import datetime
+        anio = self.cleaned_data['anio']
+        año_actual = datetime.now().year
+        if anio > año_actual:
+            raise forms.ValidationError(f'El año no puede ser mayor al año actual ({año_actual}).')
+        if anio < 1980:
+            raise forms.ValidationError('El año debe ser 1980 o posterior.')
+        return anio
+
+    def clean_marca(self):
+        """Normalizar marca a formato título."""
+        return self.cleaned_data['marca'].strip().title()
+
+    def clean_modelo(self):
+        """Normalizar modelo a formato título."""
+        return self.cleaned_data['modelo'].strip().title()
+
+
+class ReservaForm(forms.ModelForm):
+    """Formulario para crear/editar reservas de vehículos."""
+
+    class Meta:
+        model = Reserva
+        fields = ['vehiculo', 'fecha_inicio', 'fecha_fin', 'estado']
+        widgets = {
+            'vehiculo': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True,
+            }),
+            'fecha_inicio': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True,
+            }),
+            'fecha_fin': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True,
+            }),
+            'estado': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True,
+            }),
+        }
+
+    def clean(self):
+        """Validación completa del formulario incluyendo solapamiento."""
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get('fecha_inicio')
+        fecha_fin = cleaned_data.get('fecha_fin')
+        vehiculo = cleaned_data.get('vehiculo')
+
+        # Validar fechas
+        if fecha_inicio and fecha_fin:
+            if fecha_fin <= fecha_inicio:
+                self.add_error('fecha_fin', 
+                    'La fecha de fin debe ser posterior a la fecha de inicio.')
+
+        # Validar disponibilidad (solapamiento)
+        if vehiculo and fecha_inicio and fecha_fin:
+            disponible = Reserva.vehiculo_disponible(
+                vehiculo,
+                fecha_inicio,
+                fecha_fin,
+                excluir_reserva=self.instance.pk if self.instance.pk else None
+            )
+            if not disponible:
+                self.add_error('vehiculo',
+                    'Este vehículo no está disponible para las fechas seleccionadas.')
+
+        return cleaned_data
+
+
+class ReservaFormCliente(forms.ModelForm):
+    """Formulario simplificado para clientes (sin estado)."""
+
+    class Meta:
+        model = Reserva
+        fields = ['vehiculo', 'fecha_inicio', 'fecha_fin']
+        widgets = {
+            'vehiculo': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True,
+            }),
+            'fecha_inicio': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True,
+            }),
+            'fecha_fin': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True,
+            }),
+        }
+
+    def clean(self):
+        """Validación completa incluyendo solapamiento."""
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get('fecha_inicio')
+        fecha_fin = cleaned_data.get('fecha_fin')
+        vehiculo = cleaned_data.get('vehiculo')
+
+        # Validar fechas
+        if fecha_inicio and fecha_fin:
+            if fecha_fin <= fecha_inicio:
+                self.add_error('fecha_fin',
+                    'La fecha de fin debe ser posterior a la fecha de inicio.')
+
+        # Validar disponibilidad (solapamiento)
+        if vehiculo and fecha_inicio and fecha_fin:
+            disponible = Reserva.vehiculo_disponible(
+                vehiculo,
+                fecha_inicio,
+                fecha_fin,
+                excluir_reserva=self.instance.pk if self.instance.pk else None
+            )
+            if not disponible:
+                self.add_error('vehiculo',
+                    'Este vehículo no está disponible para las fechas seleccionadas.')
+
+        return cleaned_data
