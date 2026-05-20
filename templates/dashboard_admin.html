@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}FleetFlow | Dashboard admin{% endblock %}
+{% block page_heading %}Dashboard ejecutivo{% endblock %}
+{% block page_subheading %}Métricas clave, rendimiento de flota y control operativo.{% endblock %}
+
+{% block content %}
+<section class="row g-4 mb-4">
+  <div class="col-sm-6 col-xxl-3">
+    <div class="glass-card kpi-card h-100 p-4">
+      <span class="eyebrow">FLOTA TOTAL</span>
+      <div class="d-flex justify-content-between align-items-end mt-3">
+        <h3 class="mb-0">{{ total_vehiculos }}</h3>
+        <span class="trend-chip">{{ vehiculos_disponibles }} disponibles</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xxl-3">
+    <div class="glass-card kpi-card h-100 p-4">
+      <span class="eyebrow">RESERVAS ACTIVAS</span>
+      <div class="d-flex justify-content-between align-items-end mt-3">
+        <h3 class="mb-0">{{ reservas_activas }}</h3>
+        <span class="trend-chip">{{ reservas_ultimos_30_dias }} en 30d</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xxl-3">
+    <div class="glass-card kpi-card h-100 p-4">
+      <span class="eyebrow">INGRESOS (30 DÍAS)</span>
+      <div class="d-flex justify-content-between align-items-end mt-3">
+        <h3 class="mb-0">${{ ingresos_30_dias|floatformat:0 }}</h3>
+        <span class="trend-chip">últimos 30d</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xxl-3">
+    <div class="glass-card kpi-card h-100 p-4">
+      <span class="eyebrow">EN MANTENIMIENTO</span>
+      <div class="d-flex justify-content-between align-items-end mt-3">
+        <h3 class="mb-0">{{ vehiculos_en_mantenimiento }}</h3>
+        <span class="trend-chip">vehículos</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="row g-4">
+  <div class="col-xl-8">
+    <div class="glass-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <span class="eyebrow">TOP VEHÍCULOS</span>
+          <h5 class="mb-0 mt-2">Los más alquilados</h5>
+        </div>
+      </div>
+      <div class="chart-shell chart-shell-md">
+        <canvas id="topVehiculosChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="glass-card p-4 mb-4">
+      <span class="eyebrow">ESTADOS</span>
+      <h5 class="mb-3 mt-2">Distribución de reservas</h5>
+      <div class="chart-shell chart-shell-sm">
+        <canvas id="estadoReservasChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="glass-card p-4">
+      <span class="eyebrow">PRÓXIMAS RESERVAS</span>
+      <h5 class="mb-3 mt-2">Reservas para los próximos 7 días</h5>
+      <div class="table-responsive">
+        <table class="table table-dark align-middle mb-0 app-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Vehículo</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for reserva in proximas_reservas %}
+              <tr>
+                <td>{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</td>
+                <td>{{ reserva.vehiculo.marca }} {{ reserva.vehiculo.modelo }}</td>
+                <td>{{ reserva.fecha_inicio|date:"d/m/Y" }}</td>
+                <td>{{ reserva.fecha_fin|date:"d/m/Y" }}</td>
+                <td>
+                  <span class="status-pill {% if reserva.estado == 'confirmada' %}available{% elif reserva.estado == 'en_alquiler' %}processing{% elif reserva.estado == 'pendiente' %}rented{% else %}muted{% endif %}">
+                    {{ reserva.get_estado_display }}
+                  </span>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-body-tertiary py-4">No hay reservas próximas.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(async () => {
+  if (!window.Chart) return;
+  const chartDefaults = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: "#cbd5e1", font: { family: "Inter" } } } },
+    scales: { x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.06)" } },
+              y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.06)" }, beginAtZero: true } },
+  };
+  const topEl = document.getElementById("topVehiculosChart");
+  const estadoEl = document.getElementById("estadoReservasChart");
+  try {
+    const [topRes, estadoRes] = await Promise.all([
+      fetch("/api/graficos/top-vehiculos/").then(r => r.json()),
+      fetch("/api/graficos/estado-reservas/").then(r => r.json()),
+    ]);
+    if (topEl && topRes.datasets) {
+      new Chart(topEl, { type: "bar", data: topRes, options: chartDefaults });
+    }
+    if (estadoEl && estadoRes.datasets) {
+      new Chart(estadoEl, { type: "doughnut", data: estadoRes, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { color: "#cbd5e1", padding: 12, font: { family: "Inter" } } } } } });
+    }
+  } catch (e) { console.warn("Error cargando gráficos admin:", e); }
+})();
+</script>
+{% endblock %}

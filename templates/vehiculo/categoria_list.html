@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}FleetFlow | Categorías{% endblock %}
+{% block page_heading %}Categorías de vehículos{% endblock %}
+{% block page_subheading %}Clasificación y tarifas por categoría.{% endblock %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-lg-8">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <span class="eyebrow">CATEGORÍAS</span>
+          <h5 class="mb-0 mt-2">Todas las categorías</h5>
+        </div>
+        <a class="btn btn-gradient" href="{% url 'categoria_create' %}"><i class="bi bi-plus-lg"></i> Nueva categoría</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-dark align-middle mb-0 app-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Vehículos</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for categoria in categorias %}
+              <tr>
+                <td><strong>{{ categoria.nombre }}</strong></td>
+                <td class="text-body-tertiary">{{ categoria.descripcion|truncatewords:20|default:"—" }}</td>
+                <td>{{ categoria.vehiculos.count }}</td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <a class="btn btn-sm btn-glass" href="{% url 'categoria_update' categoria.pk %}"><i class="bi bi-pencil"></i></a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-body-tertiary py-4">No hay categorías registradas.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="glass-card p-4">
+      <span class="eyebrow">TARIFAS ACTIVAS</span>
+      <h5 class="mb-3 mt-2">Precios por día</h5>
+      {% for categoria in categorias %}
+        {% with tarifa=categoria.tarifas.all|first %}
+          {% if tarifa and tarifa.activa %}
+            <div class="metric-tile mb-2">
+              <small class="text-body-tertiary">{{ categoria.nombre }}</small>
+              <strong>${{ tarifa.precio_diario }}<small class="text-body-tertiary">/día</small></strong>
+            </div>
+          {% endif %}
+        {% endwith %}
+      {% empty %}
+        <p class="text-body-tertiary mb-0">Sin categorías registradas.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

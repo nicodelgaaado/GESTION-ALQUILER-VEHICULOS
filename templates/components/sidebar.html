@@ -21,7 +21,7 @@
         <i class="bi bi-shield-lock-fill"></i><span>Administracion</span>
       </a>
     {% else %}
-      <a href="{% url 'contratos' %}">
+      <a class="{% if active_page == 'mis_reservas' %}active{% endif %}" href="{% url 'mis_reservas' %}">
         <i class="bi bi-person-badge-fill"></i><span>Mi cuenta</span>
       </a>
     {% endif %}
