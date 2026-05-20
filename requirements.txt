@@ -1,0 +1,5 @@
+Django==6.0.3
+dj-database-url==3.0.1
+psycopg[binary]==3.2.13
+reportlab==4.5.1
+gunicorn==23.0.0

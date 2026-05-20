@@ -1,0 +1,38 @@
+<nav class="navbar navbar-expand-lg sticky-top app-navbar">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand d-flex align-items-center gap-3" href="{% url 'home' %}">
+      <span class="brand-mark"><i class="bi bi-car-front-fill"></i></span>
+      <span>
+        <strong>FleetFlow</strong>
+        <small class="d-block text-body-tertiary">Sistema de alquiler vehicular</small>
+      </span>
+    </a>
+    <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#topNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="topNav">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+        {% for item in nav_items %}
+          <li class="nav-item">
+            <a class="nav-link {% if active_page == item.url_name %}active{% endif %}" href="{% url item.url_name %}">
+              {{ item.label }}
+            </a>
+          </li>
+        {% endfor %}
+        {% if request.user.is_authenticated %}
+          <li class="nav-item text-body-tertiary small me-lg-2">{{ account_role }}</li>
+          <li class="nav-item ms-lg-2">
+            <a class="btn btn-gradient btn-sm px-4" href="{% url 'dashboard' %}">Abrir panel</a>
+          </li>
+          <li class="nav-item ms-lg-2">
+            <a class="btn btn-glass btn-sm px-4" href="{% url 'logout' %}">Cerrar sesion</a>
+          </li>
+        {% else %}
+          <li class="nav-item ms-lg-2">
+            <a class="btn btn-gradient btn-sm px-4" href="{% url 'login' %}">Ingresar</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

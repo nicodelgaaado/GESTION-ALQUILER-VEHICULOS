@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}FleetFlow | {% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} vehículo{% endblock %}
+{% block page_heading %}{% if form.instance.pk %}Editar vehículo{% else %}Nuevo vehículo{% endif %}{% endblock %}
+{% block page_subheading %}{% if form.instance.pk %}{{ form.instance.placa }}{% else %}Registrar un nuevo vehículo en la flota.{% endif %}{% endblock %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-lg-8">
+    <div class="glass-card p-4">
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          {% for field in form %}
+            <div class="col-md-6">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+                <div class="form-feedback form-feedback-error">
+                  {% for error in field.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <div class="d-flex gap-2 mt-4">
+          <button class="btn btn-gradient" type="submit"><i class="bi bi-check-lg"></i> {% if form.instance.pk %}Guardar cambios{% else %}Crear vehículo{% endif %}</button>
+          <a class="btn btn-glass" href="{% url 'vehiculo_list' %}"><i class="bi bi-x-lg"></i> Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="glass-card p-4">
+      <span class="eyebrow">AYUDA</span>
+      <h5 class="mb-3 mt-2">Campos del formulario</h5>
+      <ul class="text-body-tertiary">
+        <li><strong>Placa:</strong> Formato alfanumérico único del vehículo.</li>
+        <li><strong>Marca / Modelo:</strong> Nombre del fabricante y modelo específico.</li>
+        <li><strong>Año:</strong> Debe ser entre 1980 y el año actual.</li>
+        <li><strong>Categoría:</strong> Clasificación del vehículo (SUV, Sedan, etc.).</li>
+        <li><strong>Estado:</strong> Disponible, Mantenimiento o Inactivo.</li>
+        <li><strong>Kilometraje:</strong> Lectura actual del odómetro.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (() => {
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+      if (!el.classList.contains('form-control') && !el.classList.contains('form-select') && !el.classList.contains('form-check-input')) {
+        if (el.type === 'checkbox') el.classList.add('form-check-input');
+        else if (el.tagName === 'SELECT') el.classList.add('form-select');
+        else el.classList.add('form-control');
+      }
+      if (el.tagName === 'SELECT') el.classList.add('app-input');
+      else if (el.type !== 'checkbox') el.classList.add('app-input');
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}FleetFlow | Iniciar sesion{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="container py-5">
+    <div class="row justify-content-center align-items-center g-4 min-vh-75">
+      <div class="col-lg-5">
+        <div class="glass-card auth-card">
+          <span class="eyebrow">BIENVENIDO DE NUEVO</span>
+          <h1 class="h2 mt-3 mb-2">Accede a tu espacio operativo.</h1>
+          <p class="text-body-tertiary mb-4">Monitorea reservas, salud de flota y aprobaciones de contratos desde una sola capa de control.</p>
+          <form class="d-grid gap-3" method="post">
+            {% csrf_token %}
+            {% if request.GET.next %}
+              <input name="next" type="hidden" value="{{ request.GET.next }}">
+            {% endif %}
+            {% if form.non_field_errors %}
+              <div class="form-feedback form-feedback-error">{{ form.non_field_errors|join:" " }}</div>
+            {% endif %}
+            <div>
+              <label class="form-label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+              {{ form.username }}
+              {% if form.username.errors %}
+                <div class="form-feedback form-feedback-error">{{ form.username.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+            <div>
+              <label class="form-label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+              {{ form.password }}
+              {% if form.password.errors %}
+                <div class="form-feedback form-feedback-error">{{ form.password.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+            <div class="d-flex justify-content-between align-items-center small text-body-tertiary">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="remember">
+                <label class="form-check-label" for="remember">Recordarme</label>
+              </div>
+              <a href="{% url 'register' %}" class="text-decoration-none link-accent">Olvide mi contrasena</a>
+            </div>
+            <button class="btn btn-gradient btn-lg" type="submit">Ingresar</button>
+          </form>
+          <p class="text-body-tertiary mt-4 mb-0">Eres nuevo en el equipo? <a class="link-accent text-decoration-none" href="{% url 'register' %}">Crea tu cuenta</a></p>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="glass-card auth-aside h-100">
+          <span class="eyebrow">RESUMEN KPI EN VIVO</span>
+          <div class="d-grid gap-3 mt-4">
+            {% for kpi in kpis %}
+              <div class="metric-tile">
+                <small>{{ kpi.label }}</small>
+                <strong>{{ kpi.value }}</strong>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="timeline-dot mt-4">
+            <h6>Foco de hoy</h6>
+            <p>{{ today_focus }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

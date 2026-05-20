@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}FleetFlow | Reserva CTR-{{ reserva.id|stringformat:"05d" }}{% endblock %}
+{% block page_heading %}Reserva CTR-{{ reserva.id|stringformat:"05d" }}{% endblock %}
+{% block page_subheading %}{{ reserva.vehiculo.marca }} {{ reserva.vehiculo.modelo }} — {{ reserva.fecha_inicio|date:"d/m/Y" }} al {{ reserva.fecha_fin|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-lg-8">
+    <div class="glass-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+          <span class="eyebrow">DETALLE DE RESERVA</span>
+          <h5 class="mb-0 mt-2">Información del contrato</h5>
+        </div>
+        <span class="status-pill {% if reserva.estado == 'confirmada' or reserva.estado == 'devuelta' %}available{% elif reserva.estado == 'en_alquiler' %}processing{% elif reserva.estado == 'pendiente' %}rented{% else %}muted{% endif %}">
+          {{ reserva.get_estado_display }}
+        </span>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Vehículo</small>
+            <strong>{{ reserva.vehiculo.marca }} {{ reserva.vehiculo.modelo }}</strong>
+            <span class="d-block text-body-tertiary small">{{ reserva.vehiculo.placa }}</span>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Categoría</small>
+            <strong>{{ reserva.vehiculo.categoria.nombre }}</strong>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Tarifa diaria</small>
+            <strong>${{ reserva.tarifa_diaria|floatformat:2 }}</strong>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Inicio</small>
+            <strong>{{ reserva.fecha_inicio|date:"d/m/Y" }}</strong>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Fin</small>
+            <strong>{{ reserva.fecha_fin|date:"d/m/Y" }}</strong>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Días</small>
+            <strong>{{ reserva.dias }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Total</small>
+            <strong style="font-size: 1.5rem;">${{ reserva.total|floatformat:2 }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Días restantes</small>
+            <strong>{{ dias_restantes }}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-4 flex-wrap">
+        <a class="btn btn-gradient" href="{% url 'api_reserva_contrato_pdf' reserva.id %}" target="_blank"><i class="bi bi-file-pdf"></i> Descargar contrato PDF</a>
+        {% if puede_cancelar %}
+          <form method="post" action="{% url 'contratos' %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="reserva_id" value="{{ reserva.id }}">
+            <button class="btn btn-glass" type="submit" name="action" value="cancel"><i class="bi bi-x-circle"></i> Cancelar reserva</button>
+          </form>
+        {% endif %}
+        <a class="btn btn-glass" href="{% url 'mis_reservas' %}"><i class="bi bi-arrow-left"></i> Mis reservas</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="glass-card p-4">
+      <span class="eyebrow">TIMELINE</span>
+      <h5 class="mb-3 mt-2">Estado del contrato</h5>
+      <div class="timeline-line">
+        <span class="{% if reserva.estado != 'cancelada' %}active{% endif %}">Generado</span>
+        <span class="{% if reserva.estado == 'confirmada' or reserva.estado == 'en_alquiler' or reserva.estado == 'devuelta' %}active{% endif %}">Confirmado</span>
+        <span class="{% if reserva.estado == 'en_alquiler' or reserva.estado == 'devuelta' %}active{% endif %}">En alquiler</span>
+        <span class="{% if reserva.estado == 'devuelta' %}active{% endif %}">Completado</span>
+      </div>
+      {% if reserva.check_in %}
+        <div class="metric-tile mb-2">
+          <small class="text-body-tertiary">Check-in</small>
+          <strong>{{ reserva.check_in|date:"d/m/Y H:i" }}</strong>
+        </div>
+      {% endif %}
+      {% if reserva.check_out %}
+        <div class="metric-tile mb-2">
+          <small class="text-body-tertiary">Check-out</small>
+          <strong>{{ reserva.check_out|date:"d/m/Y H:i" }}</strong>
+        </div>
+      {% endif %}
+      {% if reserva.kilometraje_salida %}
+        <div class="metric-tile mb-2">
+          <small class="text-body-tertiary">Km salida</small>
+          <strong>{{ reserva.kilometraje_salida }} km</strong>
+        </div>
+      {% endif %}
+      {% if reserva.kilometraje_retorno %}
+        <div class="metric-tile">
+          <small class="text-body-tertiary">Km retorno</small>
+          <strong>{{ reserva.kilometraje_retorno }} km</strong>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

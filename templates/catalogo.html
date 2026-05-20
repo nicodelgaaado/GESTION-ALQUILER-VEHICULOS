@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}FleetFlow | Catalogo{% endblock %}
+{% block page_heading %}Catalogo de vehiculos{% endblock %}
+{% block page_subheading %}Filtra el inventario por categoria, tarifa diaria y disponibilidad con interacciones listas para el frontend.{% endblock %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-xl-3">
+    <div class="glass-card p-4 sticky-xl-top filter-panel">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <span class="eyebrow">FILTROS</span>
+          <h5 class="mb-0 mt-2">Busqueda inteligente</h5>
+        </div>
+        <button class="btn btn-sm btn-glass" id="resetFilters" type="button">Limpiar</button>
+      </div>
+      <form method="get" class="d-grid gap-3" id="catalogServerFilters">
+        <div>
+          <label class="form-label">Busqueda</label>
+          <input class="form-control app-input" type="text" name="search" placeholder="Marca, modelo, placa o categoria..." value="{{ search }}">
+        </div>
+        <div>
+          <label class="form-label">Categoria</label>
+          <select class="form-select app-input" id="categoryFilter" name="category">
+            <option value="all">Todas las categorias</option>
+            {% for category in catalog_categories %}
+              <option value="{{ category }}" {% if category_filter == category %}selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Precio diario maximo</label>
+          <input class="form-range" id="priceFilter" min="0" max="{{ catalog_summary.max_price|default:0 }}" step="1000" type="range" value="{{ catalog_summary.max_price|default:0 }}">
+          <div class="text-body-tertiary small">Hasta <span id="priceOutput">${{ catalog_summary.max_price|default:0 }}/dia</span></div>
+        </div>
+        <div>
+          <label class="form-label">Disponibilidad</label>
+          <select class="form-select app-input" id="availabilityFilter" name="availability">
+            <option value="all">Todos los estados</option>
+            <option value="available" {% if availability_filter == "available" %}selected{% endif %}>Disponible</option>
+            <option value="rented" {% if availability_filter == "rented" %}selected{% endif %}>Reservado hoy</option>
+            <option value="unavailable" {% if availability_filter == "unavailable" %}selected{% endif %}>No disponible</option>
+          </select>
+        </div>
+        <button class="btn btn-glass" type="submit"><i class="bi bi-search"></i> Buscar</button>
+      </form>
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <span class="status-pill available">Disponibles {{ catalog_summary.available }}</span>
+        <span class="status-pill rented">En reserva {{ catalog_summary.reserved }}</span>
+        <span class="status-pill muted">No disponibles {{ catalog_summary.unavailable }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-9">
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="glass-soft summary-chip"><span>Flota total</span><strong>{{ catalog_summary.total }}</strong></div>
+      </div>
+      <div class="col-md-4">
+        <div class="glass-soft summary-chip"><span>Listos para alquilar</span><strong>{{ catalog_summary.available }}</strong></div>
+      </div>
+      <div class="col-md-4">
+        <div class="glass-soft summary-chip"><span>Ingreso diario potencial</span><strong>${{ catalog_summary.daily_revenue }}</strong></div>
+      </div>
+    </div>
+    <div class="row g-4" id="vehicleGrid">
+      {% for vehicle in vehicles %}
+        <div class="col-md-6 col-xxl-4 vehicle-item" data-category="{{ vehicle.category }}" data-price="{{ vehicle.price }}" data-status="{{ vehicle.status }}">
+          <article class="glass-card vehicle-card h-100">
+            <div class="vehicle-media accent-{{ vehicle.accent }}">
+              <img src="{{ vehicle.image_url }}" data-fallback-src="/static/images/placeholder-vehicle.svg" alt="Fotografia de {{ vehicle.name }}" loading="lazy" referrerpolicy="no-referrer">
+              <span class="plate-pill">{{ vehicle.plate }}</span>
+              <span class="status-pill {{ vehicle.status }}">{{ vehicle.badge }}</span>
+            </div>
+            <div class="p-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="eyebrow">{{ vehicle.category }}</span>
+                  <h5 class="mt-2 mb-1">{{ vehicle.name }}</h5>
+                </div>
+                <div class="price-tag">${{ vehicle.price }}<small>/dia</small></div>
+              </div>
+              <div class="spec-row">
+                <span><i class="bi bi-gear-wide-connected"></i> {{ vehicle.transmission }}</span>
+                <span><i class="bi bi-people-fill"></i> {{ vehicle.seats }} plazas</span>
+                <span><i class="bi bi-lightning-charge-fill"></i> {{ vehicle.range }}</span>
+              </div>
+              {% if vehicle.status == "available" and is_client %}
+                <a class="btn btn-gradient w-100 mt-3" href="{% url 'reserva_create' %}?vehiculo={{ vehicle.id }}">Reservar</a>
+              {% elif is_admin %}
+                <a class="btn btn-glass w-100 mt-3" href="{% url 'vehiculo_detail' vehicle.id %}">Ver vehiculo</a>
+              {% else %}
+                <a class="btn btn-glass w-100 mt-3" href="{% url 'contratos' %}?vehiculo={{ vehicle.id }}">Ver estado</a>
+              {% endif %}
+            </div>
+          </article>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <div class="glass-card p-5 text-center">
+            <span class="eyebrow">SIN VEHICULOS</span>
+            <h4 class="mt-2 mb-2">No hay vehiculos registrados en la base de datos.</h4>
+            <p class="text-body-tertiary mb-0">Cuando un administrador cree vehiculos, apareceran aqui con disponibilidad calculada desde los datos reales.</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

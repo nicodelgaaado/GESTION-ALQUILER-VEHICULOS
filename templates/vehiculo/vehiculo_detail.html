@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}FleetFlow | {{ vehiculo.placa }}{% endblock %}
+{% block page_heading %}{{ vehiculo.marca }} {{ vehiculo.modelo }}{% endblock %}
+{% block page_subheading %}{{ vehiculo.placa }} — {{ vehiculo.categoria.nombre }}{% endblock %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-lg-8">
+    <div class="glass-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+          <span class="eyebrow">INFORMACIÓN GENERAL</span>
+          <h5 class="mb-0 mt-2">Detalles del vehículo</h5>
+        </div>
+        <span class="status-pill {% if vehiculo.estado == 'disponible' %}available{% elif vehiculo.estado == 'mantenimiento' %}processing{% else %}muted{% endif %}">
+          {{ vehiculo.get_estado_display }}
+        </span>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Placa</small>
+            <strong>{{ vehiculo.placa }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Marca</small>
+            <strong>{{ vehiculo.marca }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Modelo</small>
+            <strong>{{ vehiculo.modelo }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Año</small>
+            <strong>{{ vehiculo.anio }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Categoría</small>
+            <strong>{{ vehiculo.categoria.nombre }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="metric-tile">
+            <small class="text-body-tertiary">Kilometraje</small>
+            <strong>{{ vehiculo.kilometraje }} km</strong>
+          </div>
+        </div>
+        {% if vehiculo.tarifa_activa %}
+          <div class="col-md-6">
+            <div class="metric-tile">
+              <small class="text-body-tertiary">Tarifa diaria</small>
+              <strong>${{ vehiculo.tarifa_activa.precio_diario }}</strong>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+      {% if vehiculo.descripcion %}
+        <div class="mt-4">
+          <small class="text-body-tertiary">Descripción</small>
+          <p class="mt-2 mb-0">{{ vehiculo.descripcion }}</p>
+        </div>
+      {% endif %}
+      <div class="d-flex gap-2 mt-4">
+        <a class="btn btn-gradient" href="{% url 'vehiculo_update' vehiculo.pk %}"><i class="bi bi-pencil"></i> Editar</a>
+        <a class="btn btn-glass" href="{% url 'vehiculo_list' %}"><i class="bi bi-arrow-left"></i> Volver</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="glass-card p-4 mb-4">
+      <span class="eyebrow">PRÓXIMAS RESERVAS</span>
+      <h5 class="mb-3 mt-2">Reservas activas</h5>
+      {% for reserva in proximas_reservas %}
+        <div class="metric-tile mb-2">
+          <small class="text-body-tertiary">{{ reserva.fecha_inicio }} — {{ reserva.fecha_fin }}</small>
+          <strong>{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</strong>
+          <span class="status-pill d-inline-block mt-1 {% if reserva.estado == 'confirmada' %}available{% elif reserva.estado == 'pendiente' %}rented{% else %}processing{% endif %}">{{ reserva.get_estado_display }}</span>
+        </div>
+      {% empty %}
+        <p class="text-body-tertiary mb-0">No hay reservas próximas.</p>
+      {% endfor %}
+    </div>
+    <div class="glass-card p-4">
+      <span class="eyebrow">HISTORIAL</span>
+      <h5 class="mb-3 mt-2">Últimas reservas</h5>
+      {% for reserva in historial %}
+        <div class="metric-tile mb-2">
+          <small class="text-body-tertiary">{{ reserva.fecha_inicio }} — {{ reserva.fecha_fin }}</small>
+          <strong>{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</strong>
+          <span class="status-pill d-inline-block mt-1 {% if reserva.estado == 'devuelta' %}available{% elif reserva.estado == 'cancelada' %}muted{% else %}processing{% endif %}">{{ reserva.get_estado_display }}</span>
+        </div>
+      {% empty %}
+        <p class="text-body-tertiary mb-0">Sin historial de reservas.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

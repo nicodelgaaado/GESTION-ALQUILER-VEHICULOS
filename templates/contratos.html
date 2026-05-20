@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}FleetFlow | Contratos{% endblock %}
+{% block page_heading %}Espacio de contratos{% endblock %}
+{% block page_subheading %}Un flujo documental premium con cola operativa, vista previa estilo PDF y acciones reales segun el estado de cada reserva.{% endblock %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-xl-4">
+    <div class="glass-card contracts-list">
+      <div class="p-4 border-bottom border-white border-opacity-10">
+        <span class="eyebrow">COLA DE CONTRATOS</span>
+        <h5 class="mt-2 mb-0">Acuerdos pendientes y aprobados</h5>
+      </div>
+      <div class="contracts-scroll">
+        {% for contract in contracts %}
+          <a class="contract-row {% if contract.active %}active{% endif %} d-block text-decoration-none text-reset" href="{{ contract.url }}">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <span class="eyebrow">{{ contract.code }}</span>
+                <h6 class="mb-1 mt-2">{{ contract.client }}</h6>
+                <p class="mb-0 text-body-tertiary">{{ contract.vehicle }} · {{ contract.days }}</p>
+              </div>
+              <span class="status-pill {{ contract.status_class }}">{{ contract.status }}</span>
+            </div>
+            <strong class="mt-3 d-inline-block">{{ contract.amount }}</strong>
+          </a>
+        {% empty %}
+          <div class="p-4 text-body-tertiary">No hay contratos registrados todavia.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-8">
+    <div class="glass-card p-4 p-lg-5 contract-preview">
+      {% if selected_contract %}
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+          <div>
+            <span class="eyebrow">VISTA PREVIA PDF</span>
+            <h4 class="mt-2 mb-0">Contrato de alquiler {{ selected_contract.code }}</h4>
+            <p class="text-body-tertiary mt-2 mb-0">{{ selected_contract.status_note }}</p>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-glass" href="{{ selected_contract.pdf_url }}">Descargar</a>
+            <a class="btn btn-glass" href="{{ selected_contract.mailto_url }}">Enviar</a>
+            {% if selected_contract.can_approve or selected_contract.can_check_in or selected_contract.can_check_out or selected_contract.can_cancel %}
+              <form class="d-flex gap-2 flex-wrap" method="post">
+                {% csrf_token %}
+                <input name="reserva_id" type="hidden" value="{{ selected_contract.id }}">
+                {% if selected_contract.can_approve %}
+                  <button class="btn btn-gradient" name="action" type="submit" value="approve">Aprobar</button>
+                {% endif %}
+                {% if selected_contract.can_check_in %}
+                  <button class="btn btn-glass" name="action" type="submit" value="check_in">Registrar check-in</button>
+                {% endif %}
+                {% if selected_contract.can_check_out %}
+                  <button class="btn btn-glass" name="action" type="submit" value="check_out">Registrar check-out</button>
+                {% endif %}
+                {% if selected_contract.can_cancel %}
+                  <button class="btn btn-glass" name="action" type="submit" value="cancel">Cancelar</button>
+                {% endif %}
+              </form>
+            {% endif %}
+          </div>
+        </div>
+        <div class="pdf-sheet">
+          <div class="pdf-header">
+            <div>
+              <h5>Contrato de alquiler vehicular</h5>
+              <p>FleetFlow AI · Contratos digitales premium</p>
+            </div>
+            <span class="status-pill {{ selected_contract.status_class }}">{{ selected_contract.status }}</span>
+          </div>
+          <div class="pdf-grid">
+            <div>
+              <small>Cliente</small>
+              <strong>{{ selected_contract.client }}</strong>
+            </div>
+            <div>
+              <small>Vehiculo</small>
+              <strong>{{ selected_contract.vehicle }}</strong>
+            </div>
+            <div>
+              <small>Periodo</small>
+              <strong>{{ selected_contract.period }}</strong>
+            </div>
+            <div>
+              <small>Total</small>
+              <strong>{{ selected_contract.total }}</strong>
+            </div>
+            <div>
+              <small>Placa</small>
+              <strong>{{ selected_contract.plate }}</strong>
+            </div>
+            <div>
+              <small>Tarifa diaria</small>
+              <strong>{{ selected_contract.daily_rate }}</strong>
+            </div>
+            <div>
+              <small>Dias</small>
+              <strong>{{ selected_contract.days }}</strong>
+            </div>
+            <div>
+              <small>Correo cliente</small>
+              <strong>{{ selected_contract.client_email }}</strong>
+            </div>
+          </div>
+          <div class="timeline-line">
+            {% for step in selected_contract.timeline %}
+              <span class="{% if step.active %}active{% endif %}">{{ step.label }}</span>
+            {% endfor %}
+          </div>
+          <div class="pdf-copy">
+            <p>Este acuerdo autoriza el alquiler temporal del vehiculo listado bajo la tarifa activa, las condiciones de seguro y las politicas operativas definidas por FleetFlow.</p>
+            <p>El arrendatario acepta devolver el vehiculo en el estado registrado, cumplir con las obligaciones de kilometraje y servicio, y aceptar la trazabilidad digital del ciclo contractual.</p>
+            <p>Periodo contractual exacto: {{ selected_contract.period_full }}. Esta vista previa se sincroniza con la reserva seleccionada en la cola lateral.</p>
+          </div>
+          <div class="signature-grid">
+            <div>
+              <small>Firma del cliente</small>
+              <div class="signature-line"></div>
+            </div>
+            <div>
+              <small>Aprobacion operativa</small>
+              <div class="signature-line"></div>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty-contract-state">
+          <span class="eyebrow">SIN CONTRATOS</span>
+          <h4 class="mt-3">Todavia no hay reservas para mostrar</h4>
+          <p class="text-body-tertiary mb-0">Crea una reserva desde el backend o desde la API para habilitar la vista previa interactiva, la descarga del PDF y las acciones operativas.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
