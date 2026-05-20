@@ -1,0 +1,6 @@
+Watching for file changes with StatReloader
+[20/May/2026 09:04:49] "GET / HTTP/1.1" 200 10271
+[20/May/2026 09:05:06] "GET / HTTP/1.1" 200 10271
+[20/May/2026 09:05:24] "GET / HTTP/1.1" 200 10271
+[20/May/2026 09:05:24] "GET /static/css/app.css HTTP/1.1" 200 17302
+[20/May/2026 09:05:24] "GET /static/js/app.js HTTP/1.1" 200 5600
