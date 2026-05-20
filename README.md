@@ -225,6 +225,50 @@ Servidor local: http://127.0.0.1:8000/
 | `SECRET_KEY` | Clave secreta de Django |
 | `DEBUG` | `False` en producción |
 | `ALLOWED_HOSTS` | Dominios permitidos |
+| `CSRF_TRUSTED_ORIGINS` | Orígenes HTTPS permitidos para formularios |
+| `TIME_ZONE` | Zona horaria de la app |
+
+## Despliegue en Render
+
+El proyecto ya incluye una configuración lista para Render en [render.yaml](./render.yaml) y una referencia local en [.env.example](./.env.example).
+
+### Qué aprovisiona Render
+
+- Un servicio web Django con `gunicorn`
+- Una base de datos PostgreSQL administrada por Render
+- Variables de entorno para producción
+- `collectstatic`, migraciones y `seed_initial_data` durante el build
+
+### Variables y secrets en producción
+
+- `SECRET_KEY`: se genera automáticamente en Render
+- `DATABASE_URL`: se conecta automáticamente desde la base PostgreSQL del blueprint
+- `DEBUG=false`
+- `ALLOWED_HOSTS`: se completa con `RENDER_EXTERNAL_HOSTNAME` en tiempo de ejecución
+- `TIME_ZONE=America/Bogota`
+
+### Flujo recomendado con Render CLI
+
+```powershell
+render whoami
+render workspace current
+render blueprints validate .\render.yaml
+git add render.yaml runtime.txt .env.example project\settings.py project\urls.py project\ui_views.py requirements.txt README.md
+git commit -m "chore(deploy): preparar despliegue en Render"
+git push origin feature/oskar
+```
+
+Luego abre el blueprint en el Dashboard:
+
+```text
+https://dashboard.render.com/blueprint/new?repo=https://github.com/nicodelgaaado/GESTION-ALQUILER-VEHICULOS
+```
+
+### Notas operativas
+
+- El blueprint está apuntando a la rama `feature/oskar`. Si más adelante despliegas desde otra rama, cambia el campo `branch` en `render.yaml`.
+- El comando `seed_initial_data` es idempotente: crea o actualiza usuarios demo y catálogo base, sin generar reservas operativas.
+- Si prefieres un entorno sin datos demo, elimina `&& python manage.py seed_initial_data` del `buildCommand` antes del despliegue final.
 
 ## Validación
 
@@ -232,6 +276,7 @@ Servidor local: http://127.0.0.1:8000/
 python manage.py check
 python manage.py makemigrations --check --dry-run
 python manage.py test
+render blueprints validate .\render.yaml
 ```
 
 ## Despliegue

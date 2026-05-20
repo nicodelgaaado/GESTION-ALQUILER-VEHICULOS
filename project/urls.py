@@ -20,6 +20,7 @@ from . import ui_views
 
 urlpatterns = [
     path('', ui_views.home, name='home'),
+    path('health/', ui_views.health_check, name='health_check'),
     path('login/', ui_views.login_view, name='login'),
     path('logout/', ui_views.logout_view, name='logout'),
     path('register/', ui_views.register_view, name='register'),

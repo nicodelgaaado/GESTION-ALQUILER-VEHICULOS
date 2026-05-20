@@ -340,6 +340,10 @@ def home(request):
     return render(request, "index.html", context)
 
 
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
+
 def login_view(request):
     context = base_context(request, "login")
     metricas = metricas_operativas()
