@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560">
+  <rect width="900" height="560" fill="#0f172a"/>
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="560" fill="url(#g)"/>
+  <g transform="translate(450,260)" fill="#334155">
+    <rect x="-120" y="-30" width="240" height="60" rx="12"/>
+    <rect x="-100" y="-50" width="200" height="30" rx="6"/>
+    <rect x="-80" y="-60" width="160" height="16" rx="4"/>
+    <rect x="-130" y="16" width="260" height="40" rx="8"/>
+    <circle cx="-70" cy="72" r="24" fill="#1e293b"/>
+    <circle cx="70" cy="72" r="24" fill="#1e293b"/>
+    <rect x="-6" y="-4" width="12" height="24" rx="4"/>
+  </g>
+  <text x="450" y="380" font-family="Geist, sans-serif" font-size="18" fill="#475569" text-anchor="middle" letter-spacing="2">FleetFlow</text>
+</svg>
