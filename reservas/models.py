@@ -35,7 +35,7 @@ class Reserva(models.Model):
     )
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
-    estado = models.CharField(max_length=20, choices=ESTADOS, default=CONFIRMADA)
+    estado = models.CharField(max_length=20, choices=ESTADOS, default=PENDIENTE)
     tarifa_diaria = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=12, decimal_places=2)
     check_in = models.DateTimeField(null=True, blank=True)
@@ -79,7 +79,9 @@ class Reserva(models.Model):
         if self.fecha_inicio and self.fecha_fin and self.fecha_fin <= self.fecha_inicio:
             errores["fecha_fin"] = "La fecha de fin debe ser posterior a la fecha de inicio."
 
-        if self.vehiculo_id and self.fecha_inicio and self.fecha_fin:
+        if self.vehiculo_id and self.fecha_inicio and self.fecha_fin and self.estado in self.ESTADOS_ACTIVOS:
+            if self.estado in self.ESTADOS_ACTIVOS and self.vehiculo.estado != Vehiculo.DISPONIBLE:
+                errores["vehiculo"] = "El vehiculo debe estar disponible para crear o mantener una reserva activa."
             disponible = self.vehiculo_disponible(
                 self.vehiculo,
                 self.fecha_inicio,
@@ -100,6 +102,10 @@ class Reserva(models.Model):
             ).order_by("precio_diario").first()
             if tarifa:
                 self.tarifa_diaria = tarifa.precio_diario
+            elif self.estado in self.ESTADOS_ACTIVOS:
+                raise ValidationError({
+                    "tarifa_diaria": "La categoria del vehiculo no tiene una tarifa activa."
+                })
         if self.tarifa_diaria and self.fecha_inicio and self.fecha_fin:
             self.total = self.calcular_total()
         self.full_clean()

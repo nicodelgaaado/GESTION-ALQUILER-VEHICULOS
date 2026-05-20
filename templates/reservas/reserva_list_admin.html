@@ -18,15 +18,41 @@
           <span class="eyebrow">RESERVAS</span>
           <h5 class="mb-0 mt-2">Todas las reservas</h5>
         </div>
-        <form class="d-flex gap-2" method="get">
-          <select class="form-select app-input" name="estado" onchange="this.form.submit()">
+        <div class="d-flex gap-2 flex-wrap">
+          <a class="btn btn-gradient" href="{% url 'reserva_create_admin' %}"><i class="bi bi-plus-lg"></i> Nueva reserva</a>
+          <a class="btn btn-glass" href="{{ report_url }}"><i class="bi bi-filetype-pdf"></i> Exportar PDF</a>
+        </div>
+      </div>
+      <form class="row g-3 mb-4" method="get">
+        <div class="col-md-3">
+          <input class="form-control app-input" type="text" name="search" placeholder="Contrato, cliente o vehiculo..." value="{{ search }}">
+        </div>
+        <div class="col-md-3">
+          <select class="form-select app-input" name="estado">
             <option value="">Todos los estados</option>
             {% for key, label in estados %}
               <option value="{{ key }}" {% if estado_filter == key %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
-        </form>
-      </div>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select app-input" name="categoria">
+            <option value="">Todas las categorias</option>
+            {% for categoria in categorias %}
+              <option value="{{ categoria.id }}" {% if categoria_filter == categoria.id|stringformat:"s" %}selected{% endif %}>{{ categoria.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <input class="form-control app-input" type="date" name="fecha_inicio" value="{{ fecha_inicio_filter }}" aria-label="Fecha inicio">
+        </div>
+        <div class="col-md-2">
+          <input class="form-control app-input" type="date" name="fecha_fin" value="{{ fecha_fin_filter }}" aria-label="Fecha fin">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-glass w-100" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
+        </div>
+      </form>
       <div class="table-responsive">
         <table class="table table-dark align-middle mb-0 app-table">
           <thead>
@@ -39,6 +65,7 @@
               <th>Días</th>
               <th>Total</th>
               <th>Estado</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -56,10 +83,36 @@
                     {{ reserva.get_estado_display }}
                   </span>
                 </td>
+                <td>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-sm btn-glass" href="{% url 'reserva_detail_admin' reserva.id %}"><i class="bi bi-eye"></i></a>
+                    {% if reserva.estado != 'devuelta' and reserva.estado != 'cancelada' %}
+                      <a class="btn btn-sm btn-glass" href="{% url 'reserva_update_admin' reserva.id %}"><i class="bi bi-pencil"></i></a>
+                    {% endif %}
+                    <a class="btn btn-sm btn-glass" href="{% url 'api_reserva_contrato_pdf' reserva.id %}" target="_blank"><i class="bi bi-file-pdf"></i></a>
+                    <form method="post" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="reserva_id" value="{{ reserva.id }}">
+                      {% if reserva.estado == 'pendiente' %}
+                        <button class="btn btn-sm btn-gradient" name="action" value="approve" type="submit">Aprobar</button>
+                      {% endif %}
+                      {% if reserva.estado == 'pendiente' or reserva.estado == 'confirmada' %}
+                        <button class="btn btn-sm btn-glass" name="action" value="check_in" type="submit">Check-in</button>
+                      {% endif %}
+                      {% if reserva.estado == 'en_alquiler' %}
+                        <button class="btn btn-sm btn-glass" name="action" value="check_out" type="submit">Check-out</button>
+                      {% endif %}
+                      {% if reserva.estado != 'en_alquiler' and reserva.estado != 'devuelta' and reserva.estado != 'cancelada' %}
+                        <button class="btn btn-sm btn-glass" name="action" value="cancel" type="submit">Cancelar</button>
+                        <a class="btn btn-sm btn-glass" href="{% url 'reserva_delete_admin' reserva.id %}"><i class="bi bi-trash"></i></a>
+                      {% endif %}
+                    </form>
+                  </div>
+                </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="8" class="text-center text-body-tertiary py-4">No hay reservas registradas.</td>
+                <td colspan="9" class="text-center text-body-tertiary py-4">No hay reservas registradas.</td>
               </tr>
             {% endfor %}
           </tbody>

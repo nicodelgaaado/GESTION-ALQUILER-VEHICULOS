@@ -12,7 +12,7 @@
         <p class="hero-copy">FleetFlow convierte reservas, contratos, ingresos y disponibilidad vehicular en un centro de control premium para operadores ambiciosos.</p>
         <div class="d-flex flex-wrap gap-3 mt-4">
           <a class="btn btn-gradient btn-lg px-4" href="{% url 'register' %}">Comenzar prueba</a>
-          <a class="btn btn-glass btn-lg px-4" href="{% url 'dashboard' %}">Ver demo del panel</a>
+          <a class="btn btn-glass btn-lg px-4" href="{% url 'dashboard' %}">Ver panel</a>
         </div>
         <div class="row g-3 mt-5">
           {% for stat in hero_stats %}
@@ -33,21 +33,17 @@
             <span class="status-dot"></span>
           </div>
           <div class="row g-3 mb-4">
-            <div class="col-6">
-              <div class="metric-tile accent-purple">
-                <small>Ingreso diario</small>
-                <strong>$18,420</strong>
+            {% for metric in hero_panel_metrics %}
+              <div class="col-6">
+                <div class="metric-tile {{ metric.accent }}">
+                  <small>{{ metric.label }}</small>
+                  <strong>{{ metric.value }}</strong>
+                </div>
               </div>
-            </div>
-            <div class="col-6">
-              <div class="metric-tile accent-blue">
-                <small>Tasa de uso</small>
-                <strong>92%</strong>
-              </div>
-            </div>
+            {% endfor %}
           </div>
           <div class="hero-visual mt-4">
-            <img src="https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=80" alt="Lujoso auto deportivo premium" loading="lazy" referrerpolicy="no-referrer">
+            <img src="https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=80" data-fallback-src="/static/images/placeholder-vehicle.svg" alt="Lujoso auto deportivo premium" loading="lazy" referrerpolicy="no-referrer">
           </div>
           <div class="hero-chart mt-4">
             <div class="hero-chart-header">
@@ -61,13 +57,9 @@
               </div>
             </div>
             <div class="hero-bars">
-              <span style="height: 58%" title="Lun - 58%"></span>
-              <span style="height: 72%" title="Mar - 72%"></span>
-              <span style="height: 65%" title="Mié - 65%"></span>
-              <span style="height: 81%" title="Jue - 81%"></span>
-              <span style="height: 69%" title="Vie - 69%"></span>
-              <span style="height: 88%" title="Sáb - 88%"></span>
-              <span style="height: 93%" title="Dom - 93%"></span>
+              {% for bar in weekly_occupancy %}
+                <span style="height: {{ bar.value }}%" title="{{ bar.label }} - {{ bar.value }}%"></span>
+              {% endfor %}
             </div>
           </div>
         </div>

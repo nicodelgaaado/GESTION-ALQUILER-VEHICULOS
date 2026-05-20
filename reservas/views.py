@@ -1,9 +1,12 @@
 from io import BytesIO
+from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
+from django.db.models import Count, Sum
 from django.http import FileResponse, JsonResponse
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -58,6 +61,29 @@ def reservas_para_usuario(user):
     return queryset.filter(usuario=user)
 
 
+def filtrar_reservas(queryset, params):
+    estado = params.get("estado")
+    categoria = params.get("categoria")
+    fecha_inicio = params.get("fecha_inicio")
+    fecha_fin = params.get("fecha_fin")
+
+    if estado:
+        queryset = queryset.filter(estado=estado)
+    if categoria:
+        queryset = queryset.filter(vehiculo__categoria_id=categoria)
+    if fecha_inicio:
+        inicio = parse_date(fecha_inicio)
+        if not inicio:
+            raise ValueError("El parametro fecha_inicio debe tener formato YYYY-MM-DD.")
+        queryset = queryset.filter(fecha_inicio__gte=inicio)
+    if fecha_fin:
+        fin = parse_date(fecha_fin)
+        if not fin:
+            raise ValueError("El parametro fecha_fin debe tener formato YYYY-MM-DD.")
+        queryset = queryset.filter(fecha_fin__lte=fin)
+    return queryset
+
+
 def obtener_reserva(reserva_id, user):
     return reservas_para_usuario(user).get(pk=reserva_id)
 
@@ -81,21 +107,35 @@ def aplicar_reserva(reserva, payload, user):
         reserva.fecha_inicio = fecha_desde_payload(payload, "fecha_inicio")
     if "fecha_fin" in payload:
         reserva.fecha_fin = fecha_desde_payload(payload, "fecha_fin")
+    estado_anterior = reserva.estado
     if user.is_staff and "estado" in payload:
-        reserva.estado = payload["estado"]
+        nuevo_estado = payload["estado"]
+        if nuevo_estado not in dict(Reserva.ESTADOS):
+            raise ValidationError("El estado enviado no existe.")
+        if not reserva.pk and nuevo_estado not in [Reserva.PENDIENTE, Reserva.CONFIRMADA]:
+            raise ValidationError("Una reserva nueva solo puede iniciar como pendiente o confirmada.")
+        if reserva.pk and nuevo_estado != estado_anterior:
+            permitidos = {
+                Reserva.PENDIENTE: {Reserva.CONFIRMADA, Reserva.CANCELADA},
+                Reserva.CONFIRMADA: {Reserva.CANCELADA},
+            }.get(estado_anterior, set())
+            if nuevo_estado not in permitidos:
+                raise ValidationError("Use los endpoints de check-in/check-out o cancelacion para este cambio de estado.")
+        reserva.estado = nuevo_estado
 
-    if reserva.vehiculo.estado != Vehiculo.DISPONIBLE:
+    if reserva.estado in Reserva.ESTADOS_ACTIVOS and reserva.vehiculo.estado != Vehiculo.DISPONIBLE:
         raise ValidationError("El vehiculo no esta disponible para reservas.")
 
     tarifa = Tarifa.objects.filter(
         categoria=reserva.vehiculo.categoria,
         activa=True,
     ).order_by("precio_diario").first()
-    if not tarifa:
+    if not tarifa and reserva.estado in Reserva.ESTADOS_ACTIVOS:
         raise ValidationError("La categoria del vehiculo no tiene una tarifa activa.")
 
-    reserva.tarifa_diaria = tarifa.precio_diario
-    reserva.total = reserva.calcular_total()
+    if tarifa:
+        reserva.tarifa_diaria = tarifa.precio_diario
+        reserva.total = reserva.calcular_total()
     reserva.save()
     return reserva
 
@@ -135,8 +175,8 @@ def reserva_detalle(request, reserva_id):
         return JsonResponse(reserva_json(reserva))
 
     if request.method == "DELETE":
-        if reserva.estado == Reserva.EN_ALQUILER:
-            return respuesta_error("No se puede cancelar una reserva en alquiler.")
+        if reserva.estado in [Reserva.EN_ALQUILER, Reserva.DEVUELTA, Reserva.CANCELADA]:
+            return respuesta_error("No se puede cancelar una reserva en alquiler, devuelta o ya cancelada.")
         reserva.estado = Reserva.CANCELADA
         reserva.save(update_fields=["estado", "actualizado"])
         return JsonResponse(reserva_json(reserva))
@@ -363,6 +403,101 @@ def reserva_contrato_pdf(request, reserva_id):
     )
 
 
+@require_http_methods(["GET"])
+def reservas_reporte_pdf(request):
+    user = usuario_autenticado(request)
+    if not user or not user.is_staff:
+        return respuesta_error("Solo administradores pueden exportar reportes.", status=403)
+
+    try:
+        queryset = filtrar_reservas(
+            Reserva.objects.select_related("usuario", "vehiculo", "vehiculo__categoria"),
+            request.GET,
+        ).order_by("-fecha_inicio", "-creado")
+    except ValueError as exc:
+        return respuesta_error(str(exc))
+
+    reservas = list(queryset)
+    total_ingresos = sum(reserva.total for reserva in reservas)
+
+    from reportlab.lib.colors import HexColor
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    margin = 54
+    y = height - margin
+
+    def header():
+        nonlocal y
+        pdf.setFillColor(HexColor("#1e1b4b"))
+        pdf.setFont("Helvetica-Bold", 18)
+        pdf.drawString(margin, y, "FLEETFLOW")
+        pdf.setFont("Helvetica", 9)
+        pdf.setFillColor(HexColor("#64748b"))
+        pdf.drawString(margin, y - 14, "Reporte operativo de reservas")
+        pdf.drawRightString(width - margin, y - 14, timezone.now().strftime("%d/%m/%Y %H:%M"))
+        y -= 42
+        pdf.setStrokeColor(HexColor("#cbd5e1"))
+        pdf.line(margin, y, width - margin, y)
+        y -= 24
+
+    def ensure_space(points=44):
+        nonlocal y
+        if y < margin + points:
+            pdf.showPage()
+            y = height - margin
+            header()
+
+    header()
+    pdf.setFillColor(HexColor("#0f172a"))
+    pdf.setFont("Helvetica-Bold", 13)
+    pdf.drawString(margin, y, "Resumen")
+    y -= 18
+    pdf.setFont("Helvetica", 10)
+    pdf.setFillColor(HexColor("#334155"))
+    pdf.drawString(margin, y, f"Reservas incluidas: {len(reservas)}")
+    pdf.drawString(margin + 180, y, f"Total facturado: ${total_ingresos:,.2f}")
+    y -= 28
+
+    pdf.setFont("Helvetica-Bold", 9)
+    headers = ["Contrato", "Cliente", "Vehiculo", "Inicio", "Fin", "Estado", "Total"]
+    xs = [margin, margin + 66, margin + 168, margin + 278, margin + 338, margin + 398, margin + 474]
+    for x, title in zip(xs, headers):
+        pdf.drawString(x, y, title)
+    y -= 8
+    pdf.line(margin, y, width - margin, y)
+    y -= 14
+
+    pdf.setFont("Helvetica", 8)
+    for reserva in reservas:
+        ensure_space(34)
+        cliente = reserva.usuario.get_full_name() or reserva.usuario.username
+        vehiculo = f"{reserva.vehiculo.marca} {reserva.vehiculo.modelo}"
+        row = [
+            f"CTR-{reserva.id:05d}",
+            cliente[:18],
+            vehiculo[:20],
+            reserva.fecha_inicio.strftime("%d/%m/%Y"),
+            reserva.fecha_fin.strftime("%d/%m/%Y"),
+            reserva.get_estado_display()[:14],
+            f"${reserva.total:,.0f}",
+        ]
+        for x, value in zip(xs, row):
+            pdf.drawString(x, y, value)
+        y -= 16
+
+    if not reservas:
+        pdf.setFont("Helvetica", 10)
+        pdf.setFillColor(HexColor("#64748b"))
+        pdf.drawString(margin, y, "No hay reservas que coincidan con los filtros seleccionados.")
+
+    pdf.showPage()
+    pdf.save()
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename="reporte-reservas-fleetflow.pdf")
+
+
 # ============================================================================
 # Vistas JSON para gráficos Chart.js - Dashboard
 # ============================================================================
@@ -374,21 +509,23 @@ def grafico_top_vehiculos(request):
     Requiere autenticación de administrador.
     """
     user = usuario_autenticado(request)
-    if not user or not user.is_staff:
-        return respuesta_error("Acceso denegado. Solo administradores.", status=403)
-
-    from django.db.models import Count
+    if not user:
+        return respuesta_error("Debe autenticarse para consultar graficos.", status=401)
     
-    # Top 5 vehículos por cantidad de reservas
-    top_vehiculos = Vehiculo.objects.annotate(
-        num_reservas=Count('reservas')
-    ).order_by('-num_reservas')[:5]
+    top_vehiculos = reservas_para_usuario(user).values(
+        "vehiculo__marca",
+        "vehiculo__modelo",
+        "vehiculo__placa",
+    ).annotate(num_reservas=Count("id")).order_by("-num_reservas")[:5]
 
     data = {
-        "labels": [f"{v.marca} {v.modelo} ({v.placa})" for v in top_vehiculos],
+        "labels": [
+            f"{v['vehiculo__marca']} {v['vehiculo__modelo']} ({v['vehiculo__placa']})"
+            for v in top_vehiculos
+        ],
         "datasets": [{
             "label": "Cantidad de Alquileres",
-            "data": [v.num_reservas for v in top_vehiculos],
+            "data": [v["num_reservas"] for v in top_vehiculos],
             "backgroundColor": [
                 "rgba(99, 102, 241, 0.8)",
                 "rgba(139, 92, 246, 0.8)",
@@ -416,32 +553,27 @@ def grafico_ingresos_mensuales(request):
     Requiere autenticación de administrador.
     """
     user = usuario_autenticado(request)
-    if not user or not user.is_staff:
-        return respuesta_error("Acceso denegado. Solo administradores.", status=403)
-
-    from django.db.models import Sum
-    from datetime import datetime, timedelta
+    if not user:
+        return respuesta_error("Debe autenticarse para consultar graficos.", status=401)
     
-    # Últimos 12 meses
-    hoy = datetime.now().date()
+    hoy = timezone.now().date()
     meses = []
     ingresos = []
     
     for i in range(11, -1, -1):
-        fecha_inicio = datetime(hoy.year, hoy.month, 1) - timedelta(days=i*30)
-        fecha_inicio = fecha_inicio.replace(day=1)
-        
-        # Primer día del mes siguiente
-        if fecha_inicio.month == 12:
-            fecha_fin = fecha_inicio.replace(year=fecha_inicio.year + 1, month=1)
+        month_index = hoy.year * 12 + hoy.month - 1 - i
+        year = month_index // 12
+        month = month_index % 12 + 1
+        fecha_inicio = date(year, month, 1)
+        if month == 12:
+            fecha_fin = date(year + 1, 1, 1)
         else:
-            fecha_fin = fecha_inicio.replace(month=fecha_inicio.month + 1)
+            fecha_fin = date(year, month + 1, 1)
         
-        # Ingresos del mes
-        reservas_mes = Reserva.objects.filter(
+        reservas_mes = reservas_para_usuario(user).filter(
             estado=Reserva.DEVUELTA,
-            actualizado__gte=fecha_inicio,
-            actualizado__lt=fecha_fin,
+            actualizado__date__gte=fecha_inicio,
+            actualizado__date__lt=fecha_fin,
         ).aggregate(total=Sum('total'))
         
         mes_nombre = fecha_inicio.strftime("%b %Y")
@@ -470,13 +602,10 @@ def grafico_estado_reservas(request):
     Requiere autenticación de administrador.
     """
     user = usuario_autenticado(request)
-    if not user or not user.is_staff:
-        return respuesta_error("Acceso denegado. Solo administradores.", status=403)
-
-    from django.db.models import Count
+    if not user:
+        return respuesta_error("Debe autenticarse para consultar graficos.", status=401)
     
-    # Contar reservas por estado
-    estados_count = Reserva.objects.values('estado').annotate(
+    estados_count = reservas_para_usuario(user).values('estado').annotate(
         count=Count('id')
     ).order_by('-count')
     

@@ -76,15 +76,20 @@ h1, h2, h3, h4, h5, h6, .navbar-brand strong {
 }
 
 .nav-link {
-  opacity: 0.75;
+  color: #b9c2d8;
+  opacity: 1;
   transition: 0.25s ease;
 }
 
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link.show,
+.navbar-nav .nav-link:focus,
+.navbar-nav .nav-link:hover,
 .nav-link.active,
 .nav-link:hover,
 .link-accent:hover {
   opacity: 1;
-  color: #fff;
+  color: #f8fbff !important;
 }
 
 .brand-mark,
@@ -103,32 +108,62 @@ h1, h2, h3, h4, h5, h6, .navbar-brand strong {
 .btn-gradient {
   background: linear-gradient(135deg, var(--purple), var(--blue));
   border: 0;
-  color: #fff;
+  color: #fff !important;
   box-shadow: 0 12px 30px rgba(59, 130, 246, 0.32);
 }
 
 .btn-gradient:hover,
 .btn-gradient:focus {
-  color: #fff;
+  color: #fff !important;
   transform: translateY(-1px);
 }
 
 .btn-glass {
   background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
+  color: var(--text) !important;
   border: 1px solid var(--border);
 }
 
 .btn-glass:hover {
-  color: #fff;
+  color: #fff !important;
   border-color: rgba(167, 139, 250, 0.55);
 }
 
-.btn,
-.btn:hover,
-.btn:focus,
-.btn:active {
-  color: inherit;
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.4rem;
+  padding: 0.52rem 0.95rem;
+  border-radius: 0.72rem;
+  font-weight: 650;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  min-height: 2rem;
+  min-width: 2rem;
+  padding: 0.38rem 0.65rem;
+  border-radius: 0.58rem;
+  font-size: 0.86rem;
+}
+
+.btn-lg {
+  min-height: 2.75rem;
+  padding: 0.68rem 1.15rem;
+  border-radius: 0.85rem;
+}
+
+.app-navbar .btn {
+  min-height: 2.2rem;
+  padding: 0.46rem 1rem !important;
+}
+
+.topbar-actions > .btn {
+  min-height: 2.65rem;
+  padding: 0.68rem 1rem;
 }
 
 .eyebrow {
@@ -535,13 +570,18 @@ select.form-select option:checked {
   padding: 1.5rem;
   border-radius: 1.5rem;
   margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.25rem;
 }
 
 .search-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.9rem 1rem;
+  min-height: 2.65rem;
+  padding: 0.62rem 0.9rem;
   border-radius: 999px;
   color: var(--muted);
   background: rgba(255, 255, 255, 0.04);
@@ -563,12 +603,12 @@ select.form-select option:checked {
   font-family: "Inter", sans-serif;
   font-size: 0.9rem;
   outline: none;
-  width: 180px;
+  width: min(22vw, 230px);
   transition: width 0.25s ease;
 }
 
 .search-chip:focus-within .search-input {
-  width: 260px;
+  width: min(28vw, 300px);
 }
 
 .search-input::placeholder {
@@ -748,7 +788,7 @@ select.form-select option:checked {
 }
 
 .contract-row {
-  color: inherit;
+  color: var(--text);
   padding: 1.35rem 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   transition: 0.2s ease;
@@ -835,6 +875,11 @@ select.form-select option:checked {
   color: #cbd5e1;
 }
 
+.status-pill.unavailable {
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
+}
+
 .signature-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -885,6 +930,13 @@ select.form-select option:checked {
   .fleet-strip {
     flex-direction: column;
     align-items: start;
+  }
+
+  .topbar-actions,
+  .search-chip,
+  .search-input,
+  .search-chip:focus-within .search-input {
+    width: 100%;
   }
 
   .pdf-grid,

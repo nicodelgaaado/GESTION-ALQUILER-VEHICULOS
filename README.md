@@ -2,11 +2,20 @@
 
 Sistema Django 6.0 para administrar el ciclo completo de alquiler vehicular: catálogo, categorías, tarifas, disponibilidad, reservas, check-in/check-out, contratos PDF, dashboard con gráficos y panel administrativo con control de roles.
 
-## Credenciales predefinidas
+## Credenciales locales
+
+Las credenciales y datos iniciales de catálogo se crean de forma repetible con:
+
+```powershell
+python manage.py seed_initial_data
+```
+
+Este comando no crea reservas ni estados operativos de muestra. Las reservas, ingresos, disponibilidad y gráficos se alimentan únicamente de los datos reales creados desde la aplicación.
 
 | Rol | Email | Contraseña |
 |---|---|---|
 | Administrador | `admin@fleetflow.com` | `admin` |
+| Cliente | `cliente@fleetflow.com` | `cliente123` |
 
 
 ## Funcionalidades implementadas
@@ -32,7 +41,7 @@ Sistema Django 6.0 para administrar el ciclo completo de alquiler vehicular: cat
 - Cancelación de reservas
 - Check-in / Check-out con registro de kilometraje
 - Vista para clientes: "Mis reservas" con detalle y timeline
-- Vista para administradores: listado completo con filtro por estado
+- Vista para administradores: CRUD completo, filtros, acciones de estado y reporte PDF
 
 ### Dashboard y gráficos
 - Panel con KPIs (alquileres activos, ingresos, utilización, devoluciones)
@@ -132,7 +141,16 @@ GESTION-ALQUILER-VEHICULOS/
 | `/admin/categorias/` | Lista de categorías |
 | `/admin/categorias/crear/` | Nueva categoría |
 | `/admin/categorias/<id>/editar/` | Editar categoría |
+| `/admin/categorias/<id>/eliminar/` | Eliminar categoría |
+| `/admin/tarifas/` | Lista de tarifas |
+| `/admin/tarifas/crear/` | Nueva tarifa |
+| `/admin/tarifas/<id>/editar/` | Editar tarifa |
+| `/admin/tarifas/<id>/eliminar/` | Eliminar tarifa |
 | `/admin/reservas/` | Lista de reservas (admin) |
+| `/admin/reservas/crear/` | Nueva reserva administrativa |
+| `/admin/reservas/<id>/` | Detalle de reserva administrativa |
+| `/admin/reservas/<id>/editar/` | Editar reserva administrativa |
+| `/admin/reservas/<id>/eliminar/` | Cancelar reserva administrativa |
 | `/admin/dashboard/` | Dashboard ejecutivo |
 
 ### Cliente MVT
@@ -158,9 +176,10 @@ GESTION-ALQUILER-VEHICULOS/
 | `POST /api/reservas/<id>/check-in/` | Check-in |
 | `POST /api/reservas/<id>/check-out/` | Check-out |
 | `GET /api/reservas/<id>/contrato.pdf` | Descargar PDF |
-| `GET /api/graficos/ingresos-mensuales/` | Ingresos (admin) |
-| `GET /api/graficos/top-vehiculos/` | Top vehículos (admin) |
-| `GET /api/graficos/estado-reservas/` | Estados (admin) |
+| `GET /api/reservas/reporte.pdf` | Reporte PDF filtrable de reservas |
+| `GET /api/graficos/ingresos-mensuales/` | Ingresos según usuario autenticado |
+| `GET /api/graficos/top-vehiculos/` | Top vehículos según usuario autenticado |
+| `GET /api/graficos/estado-reservas/` | Estados según usuario autenticado |
 
 ### Django Admin
 | Ruta | Descripción |
@@ -192,6 +211,7 @@ python -m venv ambiente
 .\ambiente\Scripts\Activate.ps1
 pip install -r requirements.txt
 python manage.py migrate
+python manage.py seed_initial_data
 python manage.py runserver
 ```
 
@@ -213,6 +233,10 @@ python manage.py check
 python manage.py makemigrations --check --dry-run
 python manage.py test
 ```
+
+## Despliegue
+
+El despliegue queda fuera del alcance de esta entrega local. El proyecto está preparado para desarrollo con SQLite y puede adaptarse posteriormente a Render, Railway o PythonAnywhere configurando variables de entorno y una base de datos compatible.
 
 ## Dependencias principales
 

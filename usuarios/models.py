@@ -48,16 +48,17 @@ class CustomUser(AbstractUser):
     @property
     def es_admin(self):
         """Verificar si el usuario es administrador."""
-        return self.role == self.ROLE_ADMIN or self.is_staff
+        return self.role == self.ROLE_ADMIN or self.is_staff or self.is_superuser
     
     @property
     def es_cliente(self):
         """Verificar si el usuario es cliente."""
-        return self.role == self.ROLE_CLIENTE or (not self.is_staff and self.role != self.ROLE_ADMIN)
+        return self.role == self.ROLE_CLIENTE and not self.is_staff and not self.is_superuser
     
     def save(self, *args, **kwargs):
         """Al guardar, sincronizar role con is_staff para compatibilidad."""
-        if self.role == self.ROLE_ADMIN:
+        if self.is_superuser or self.is_staff or self.role == self.ROLE_ADMIN:
+            self.role = self.ROLE_ADMIN
             self.is_staff = True
         elif self.role == self.ROLE_CLIENTE:
             self.is_staff = False

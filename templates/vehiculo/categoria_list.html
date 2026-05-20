@@ -12,7 +12,10 @@
           <span class="eyebrow">CATEGORÍAS</span>
           <h5 class="mb-0 mt-2">Todas las categorías</h5>
         </div>
-        <a class="btn btn-gradient" href="{% url 'categoria_create' %}"><i class="bi bi-plus-lg"></i> Nueva categoría</a>
+        <div class="d-flex gap-2">
+          <a class="btn btn-glass" href="{% url 'tarifa_list' %}"><i class="bi bi-cash-coin"></i> Tarifas</a>
+          <a class="btn btn-gradient" href="{% url 'categoria_create' %}"><i class="bi bi-plus-lg"></i> Nueva categoría</a>
+        </div>
       </div>
       <div class="table-responsive">
         <table class="table table-dark align-middle mb-0 app-table">
@@ -33,6 +36,7 @@
                 <td>
                   <div class="d-flex gap-2">
                     <a class="btn btn-sm btn-glass" href="{% url 'categoria_update' categoria.pk %}"><i class="bi bi-pencil"></i></a>
+                    <a class="btn btn-sm btn-glass" href="{% url 'categoria_delete' categoria.pk %}"><i class="bi bi-trash"></i></a>
                   </div>
                 </td>
               </tr>

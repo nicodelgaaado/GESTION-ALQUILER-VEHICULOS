@@ -28,12 +28,12 @@
               <p class="text-body-tertiary mb-0">{% block page_subheading %}Claridad operativa para tu negocio de alquiler.{% endblock %}</p>
             </div>
             <div class="topbar-actions">
-              <form class="search-chip" method="get" action="{% if is_admin %}{% url 'vehiculo_list' %}{% else %}{% url 'catalogo_cliente' %}{% endif %}">
+              <form class="search-chip" method="get" action="{% if active_page == 'contratos' %}{% url 'contratos' %}{% elif is_admin %}{% url 'vehiculo_list' %}{% else %}{% url 'catalogo' %}{% endif %}">
                 <i class="bi bi-search"></i>
-                <input class="search-input" type="text" name="search" placeholder="Buscar vehiculos, contratos y clientes..." aria-label="Buscar">
+                <input class="search-input" type="text" name="search" value="{{ search|default:'' }}" placeholder="{% if active_page == 'contratos' %}Buscar contrato, cliente o vehiculo{% elif is_admin %}Buscar placa, marca o modelo{% else %}Buscar vehiculo disponible{% endif %}" aria-label="Buscar">
               </form>
               {% if is_admin %}
-                <a class="btn btn-gradient" href="{% url 'catalogo' %}">Gestionar flota</a>
+                <a class="btn btn-gradient" href="{% url 'vehiculo_list' %}">Gestionar flota</a>
               {% else %}
                 <a class="btn btn-gradient" href="{% url 'contratos' %}">Mis contratos</a>
               {% endif %}
